@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <cstdlib>
+#include <cassert>
 
 #include <raylib.h>
 
@@ -15,32 +16,47 @@ class A1Circle
     float m_sx;
     float m_sy;
 
-    int r, g, b;
+    Color m_shapeColor;
 
     float m_radius;
     const std::string& m_name;
 
+    Font m_font;
+    Color m_fontColor;
+
 public:
-    A1Circle(float x, float y, float sx, float sy, float radius, int r, int g, int b, const std::string &name)
+    A1Circle(float x, float y, float sx, float sy, float radius, const std::string &name, int r, int g, int b, Font font, int fr, int fg, int fb)
         : m_x(x)
         , m_y(y)
         , m_sx(sx)
         , m_sy(sy)
         , m_radius(radius)
-        , r(r), g(g), b(b)
         , m_name(name)
-    {}
+        , m_font(font)
+    {
+        m_shapeColor.r = r;
+        m_shapeColor.g = g;
+        m_shapeColor.b = b;
+        m_shapeColor.a = 255;
+
+        m_fontColor.r = fr;
+        m_fontColor.g = fg;
+        m_fontColor.b = fb;
+        m_fontColor.a = 255;
+    }
 
     ~A1Circle() {}
 
-    void draw(Font font)
+    void draw()
     {
-        Color color = {};
-        color.r = r;
-        color.g = g;
-        color.b = b;
-        color.a = 255;
-        DrawCircle(m_x + m_radius, m_y + m_radius, m_radius, color);
+        DrawCircle(m_x + m_radius, m_y + m_radius, m_radius, m_shapeColor);
+        int textWidth = MeasureText(m_name.c_str(), 18);
+        Vector2 textPositon = {};
+        textPositon.x = m_x + (m_radius) - (static_cast<float>(textWidth) / 2);
+        textPositon.y = m_y + (m_radius) - (static_cast<float>(18 / 2));
+        // TODO: Fix the Font issue. For some reason in hava a font.texture.id == 0.
+        // Because of that fuctions can't correctly work with it :(
+        DrawText(m_name.c_str(), textPositon.x, textPositon.y, 18, m_fontColor);
     }
 
     void update(int windowWidth, int windowHeight)
@@ -71,44 +87,47 @@ class A1Rectangle
     float m_width;
     float m_height;
 
-    int r, g, b;
+    Color m_shapeColor;
 
-    const std::string& m_name;
+    std::string m_name;
+
+    Font m_font;
+    Color m_fontColor;
 
 public:
-    A1Rectangle(float x, float y, float sx, float sy, float width, float height, int r, int g, int b, const std::string& name)
+    A1Rectangle(float x, float y, float sx, float sy, float width, float height, std::string name, int r, int g, int b, Font font, int fr, int fg, int fb)
         : m_x(x)
         , m_y(y)
         , m_sx(sx)
         , m_sy(sy)
         , m_height(height)
         , m_width(width)
-        , r(r), g(g), b(b)
         , m_name(name)
-    {}
+        , m_font(font)
+    {
+        m_shapeColor.r = r;
+        m_shapeColor.g = g;
+        m_shapeColor.b = b;
+        m_shapeColor.a = 255;
+
+        m_fontColor.r = fr;
+        m_fontColor.g = fg;
+        m_fontColor.b = fb;
+        m_fontColor.a = 255;
+    }
 
     ~A1Rectangle() {}
 
-    void draw(Font font)
+    void draw()
     {
-        if (!IsFontValid(font))
-        {
-            std::cerr << "Corrupted font\n";
-        }
-
-        Color color = {};
-        color.r = r;
-        color.g = g;
-        color.b = b;
-        color.a = 255;
-        DrawRectangle(m_x, m_y, m_width, m_height, color);
-        Vector2 textSize = MeasureTextEx(font, m_name.c_str(), font.baseSize, 1.f);
+        DrawRectangle(m_x, m_y, m_width, m_height, m_shapeColor);
+        int textWidth = MeasureText(m_name.c_str(), 18);
         Vector2 textPositon = {};
-        textPositon.x = 0;
-        textPositon.y = 0;
+        textPositon.x = m_x + (m_width / 2) - (static_cast<float>(textWidth) / 2);
+        textPositon.y = m_y + (m_height / 2) - (static_cast<float>(18 / 2));
         // TODO: Fix the Font issue. For some reason in hava a font.texture.id == 0.
         // Because of that fuctions can't correctly work with it :(
-        DrawTextEx(font, m_name.c_str(), textPositon, font.baseSize, 5, RED);
+        DrawText(m_name.c_str(), textPositon.x, textPositon.y, 18, m_fontColor);
     }
 
     void update(int windowWidth, int windowHeight)
@@ -192,8 +211,6 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    std::cout << "File opened successfully\n";
-
     std::string type;
 
     while (config_file >> type)
@@ -208,12 +225,13 @@ int main(int argc, char** argv)
             config_file >> fData.font_size;
             config_file >> fData.r >> fData.g >> fData.b;
             std::string fontPath = std::string("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\") + fData.font_name;
-            font = LoadFontEx(fontPath.c_str(), fData.font_size, nullptr, 250);
+            font = LoadFontEx(fontPath.c_str(), fData.font_size, nullptr, 255);
             if (!IsFontValid(font))
             {
                 std::cerr << "Failed to load font: " << fData.font_name << "\n";
                 exit(-1);
             }
+            //assert(font.texture.id != 0 && "Failed to load font (texture.id == 0)");
         }
         else if (type == "Circle")
         {
@@ -224,11 +242,12 @@ int main(int argc, char** argv)
             config_file >> cData.radius;
 
             circles.push_back(std::make_shared<A1Circle>(
-                cData.x, cData.y,           // Position
-                cData.sx, cData.sy,         // Velocity
-                cData.radius,               // Radius
-                cData.r, cData.g, cData.b,  // Color
-                cData.name));               // Name
+                cData.x, cData.y,                       // Position
+                cData.sx, cData.sy,                     // Velocity
+                cData.radius,                           // Radius
+                cData.name,                             // Name
+                cData.r, cData.g, cData.b,              // Color
+                font, fData.r, fData.g, fData.b));      // Font
         }         
         else if (type == "Rectangle")
         {
@@ -240,11 +259,12 @@ int main(int argc, char** argv)
             config_file >> rData.h;
 
             rectangles.push_back(std::make_shared<A1Rectangle>(
-                rData.x, rData.y,           // Position
-                rData.sx, rData.sy,         // Velocity
-                rData.w, rData.h,           // Size
-                rData.r, rData.g, rData.b,  // Color
-                rData.name));               // Name
+                rData.x, rData.y,                       // Position
+                rData.sx, rData.sy,                     // Velocity
+                rData.w, rData.h,                       // Size
+                rData.name,                             // Name
+                rData.r, rData.g, rData.b,              // Color
+                font, fData.r, fData.g, fData.b));      // Font
         }
         else
         {
@@ -252,7 +272,7 @@ int main(int argc, char** argv)
         }
     }
     
-
+    //SetTargetFPS(60);
     InitWindow(wData.width, wData.height, "Assigments 1 CS4300");
 
     while (!WindowShouldClose())
@@ -275,14 +295,20 @@ int main(int argc, char** argv)
         BeginDrawing();
         ClearBackground(BLACK);
 
+        DrawFPS(0, 0);
+
         for (size_t i = 0; i < circles.size(); i++)
         {
-            circles[i]->draw(font);
+            circles[i]->draw();
         }
 
         for (size_t i = 0; i < rectangles.size(); i++)
         {
-            rectangles[i]->draw(font);
+            //if (!IsFontValid(font))
+            //{
+            //    std::cerr << "Corrupted font" << std::endl;
+            //}
+            rectangles[i]->draw();
         }
         
         EndDrawing();
