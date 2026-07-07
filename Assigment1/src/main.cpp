@@ -1,3 +1,4 @@
+#if 1
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -6,7 +7,7 @@
 #include <cstdlib>
 #include <cassert>
 
-#include <raylib.h>
+#include "raylib.h"
 
 class A1Circle
 {
@@ -200,7 +201,6 @@ int main(int argc, char** argv)
     CircleData cData{};
     RectangleData rData{};
 
-    Font font;
 
 
     std::ifstream config_file("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\res\\config.txt");
@@ -212,6 +212,7 @@ int main(int argc, char** argv)
     }
 
     std::string type;
+    Font font;
 
     while (config_file >> type)
     {
@@ -226,11 +227,11 @@ int main(int argc, char** argv)
             config_file >> fData.r >> fData.g >> fData.b;
             std::string fontPath = std::string("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\") + fData.font_name;
             font = LoadFontEx(fontPath.c_str(), fData.font_size, nullptr, 255);
-            if (!IsFontValid(font))
-            {
-                std::cerr << "Failed to load font: " << fData.font_name << "\n";
-                exit(-1);
-            }
+            //if (!IsFontValid(font))
+            //{
+            //    std::cerr << "Failed to load font: " << fData.font_name << "\n";
+            //    exit(-1);
+            //}
             //assert(font.texture.id != 0 && "Failed to load font (texture.id == 0)");
         }
         else if (type == "Circle")
@@ -271,9 +272,18 @@ int main(int argc, char** argv)
             std::cerr << "Unknown \"" << type << "\"" << std::endl;
         }
     }
-    
+    config_file.close();
+
+    std::cout << fData.font_name << " " << fData.font_size << std::endl;
+    std::string fontPath = std::string("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\") + fData.font_name;
+
+    SetTargetFPS(60);
+
+    SetTextLineSpacing(16);
+
     //SetTargetFPS(60);
     InitWindow(wData.width, wData.height, "Assigments 1 CS4300");
+    Font chikifont = LoadFontEx("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\res\\pixantiqua.ttf", 32, 0, 250);
 
     while (!WindowShouldClose())
     {
@@ -297,6 +307,9 @@ int main(int argc, char** argv)
 
         DrawFPS(0, 0);
 
+        DrawTextEx(chikifont, "Hi, My name is Ren4", Vector2{ 10.f, 10.f }, 32.f, 2.f, MAGENTA);
+        DrawTextEx(chikifont, "BiliBili", Vector2{ 20.0f, 100.0f }, (float)chikifont.baseSize, 2, LIME);
+
         for (size_t i = 0; i < circles.size(); i++)
         {
             circles[i]->draw();
@@ -304,17 +317,116 @@ int main(int argc, char** argv)
 
         for (size_t i = 0; i < rectangles.size(); i++)
         {
-            //if (!IsFontValid(font))
-            //{
-            //    std::cerr << "Corrupted font" << std::endl;
-            //}
             rectangles[i]->draw();
         }
         
         EndDrawing();
     }
 
+    UnloadFont(chikifont);
+    UnloadFont(font);
+
     CloseWindow();
 
     return 0;
 }
+#else
+/*******************************************************************************************
+*
+*   raylib [text] example - Font loading
+*
+*   NOTE: raylib can load fonts from multiple input file formats:
+*
+*     - TTF/OTF > Sprite font atlas is generated on loading, user can configure
+*                 some of the generation parameters (size, characters to include)
+*     - BMFonts > Angel code font fileformat, sprite font image must be provided
+*                 together with the .fnt file, font generation cna not be configured
+*     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
+*                 Characters in image must follow some spacing and order rules
+*
+*   Example originally created with raylib 1.4, last time updated with raylib 3.0
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
+*
+********************************************************************************************/
+
+#include "raylib.h"
+
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
+{
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font loading");
+
+    // Define characters to draw
+    // NOTE: raylib supports UTF-8 encoding, following list is actually codified as UTF8 internally
+    const char msg[256] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI\nJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmn\nopqrstuvwxyz{|}~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓ\nÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷\nøùúûüýþÿ";
+
+    // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
+
+    // BMFont (AngelCode) : Font data and image atlas have been generated using external program
+    //Font fontBm = LoadFont("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\res\\pixantiqua.fnt");
+
+    // TTF font : Font data and atlas are generated directly from TTF
+    // NOTE: We define a font base size of 32 pixels tall and up-to 250 characters
+    Font fontTtf = LoadFontEx("G:\\Code\\CS4300\\Assigment1\\build\\Debug\\res\\pixantiqua.ttf", 32, 0, 250);
+
+    SetTextLineSpacing(16);         // Set line spacing for multiline text (when line breaks are included '\n')
+
+    bool useTtf = false;
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        if (IsKeyDown(KEY_SPACE)) useTtf = true;
+        else useTtf = false;
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);
+
+        DrawText("Hold SPACE to use TTF generated font", 20, 20, 20, LIGHTGRAY);
+
+        //if (!useTtf)
+        //{
+        //    DrawTextEx(fontBm, msg, Vector2{ 20.0f, 100.0f }, (float)fontBm.baseSize, 2, MAROON);
+        //    DrawText("Using BMFont (Angelcode) imported", 20, GetScreenHeight() - 30, 20, GRAY);
+        //}
+        //else
+        {
+            DrawTextEx(fontTtf, msg, Vector2{ 20.0f, 100.0f }, (float)fontTtf.baseSize, 2, LIME);
+            DrawText("Using TTF font generated", 20, GetScreenHeight() - 30, 20, GRAY);
+        }
+
+        EndDrawing();
+        //----------------------------------------------------------------------------------
+    }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    //UnloadFont(fontBm);     // AngelCode Font unloading
+    UnloadFont(fontTtf);    // TTF Font unloading
+
+    CloseWindow();          // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+
+    return 0;
+}
+#endif
