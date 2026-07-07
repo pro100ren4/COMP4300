@@ -1,0 +1,2 @@
+Window 800 600
+Font res\pixantiqua.ttf 18 255 255 255
