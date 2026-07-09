@@ -5,6 +5,7 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
 	src/main.cpp
+  src/Config.h
 )
 
 add_subdirectory(external/raylib-5.5)

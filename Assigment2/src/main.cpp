@@ -1,18 +1,9 @@
-#include "raylib.h"
+#include "Game.h"
 
 int main(void)
 {
-    InitWindow(800, 450, "raylib example - basic window");
+  Game game("G:\\Code\\CS4300\\Assigment2\\build\\Debug\\res\\config.txt");
+  game.run();
 
-    while (!WindowShouldClose())
-    {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-        EndDrawing();
-    }
-
-    CloseWindow();
-
-    return 0;
+  return 0;
 }
