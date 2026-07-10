@@ -7,24 +7,70 @@
 class CTransform
 {
 public:
-  Vec2 positon;
-  Vec2 velocity;
-  float angle;    // NOTE: Need to be explained in which units agnle are.
-                  // In radians or in degrees. 
+    Vec2 position;
+    Vec2 velocity;
+    float angle;
   
-  CTransform(const Vec2 &postion, const Vec2 &velocity, float angle)
-    : position(position)
-    , velocity(velocity)
-    , angle(angle)
-  {
-  }
+    CTransform(const Vec2 &position, const Vec2 &velocity, float angle)
+        : position(position)
+        , velocity(velocity)
+        , angle(angle)
+    {}
+};
+
+class CShape
+{
+public:
+    size_t numberVerticies;
+    Color outline;
+    Color fill;
+    float thickness;
+
+    CShape(const size_t numberVerticies, const Color& outline, const Color& fill, float thickness)
+        : numberVerticies(numberVerticies)
+        , outline(outline)
+        , fill(fill)
+        , thickness(thickness)
+    {}
+};
+
+class CCollision
+{
+public:
+    float radius = 0.f;
+
+    CCollision(float radius)
+        : radius(radius)
+    {}
+};
+
+class CScore
+{
+public:
+    int score = 0;
+
+    CScore() {}
 };
 
 class CInput
 {
+public:
+    bool up = false;
+    bool down = false;
+    bool left = false;
+    bool right = false;
+
+    CInput() {}
 };
 
 class CTimer
 {
+public:
+    size_t totalCount;
+    size_t currentCount;
+    
+    CTimer(size_t count)
+        : totalCount(count)
+        , currentCount(count)
+    {}
 };
-

@@ -4,8 +4,17 @@ set(PROJECT_NAME Assigment2)
 project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
-	src/main.cpp
+  src/main.cpp
+  src/Entity.h
+  src/Entity.cpp
+  src/EntityManager.h
+  src/EntityManager.cpp
+  src/Game.h
+  src/Game.cpp
+  src/Vec2.h
+  src/Vec2.cpp
   src/Config.h
+  src/Components.h
 )
 
 add_subdirectory(external/raylib-5.5)

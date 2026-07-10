@@ -8,6 +8,8 @@ struct WindowConfig
 {
   size_t width;
   size_t height;
+  float FPSLimit;
+  bool isFullScreen;
 };
 
 struct FontConfig

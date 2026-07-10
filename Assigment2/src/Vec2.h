@@ -11,14 +11,12 @@ public:
  
   Vec2 operator+(const Vec2 &other);
   Vec2 operator-(const Vec2 &other);
-  Vec2 operator*(const Vec2 &other);
-  Vec2 operator/(const Vec2 &other);
+  Vec2 operator*(float value);
 
   void operator+=(const Vec2 &other);
   void operator-=(const Vec2 &other);
-  void operator*=(const Vec2 &other);
-  void operator/=(const Vec2 &other);
+  void operator*=(float value);
 
-  float distance(const Vec2 &destination);
+  float distance(const Vec2 &destination) const;
 };
 
