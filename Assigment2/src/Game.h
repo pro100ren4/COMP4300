@@ -20,7 +20,9 @@ class Game
 	void systemRender();
 	void systemMovement();
 	void systemPlayer();
+  void systemInput();
 
+  void clearInputs();
 	void drawBackground();
 	bool readConfigFile(const std::string &pathToConfigFile);
 	static int rand(int min, int max);
