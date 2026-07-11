@@ -1,15 +1,31 @@
 #pragma once
 
-#include "Config.h"
 #include <string>
+
+#include "Config.h"
+#include "EntityManager.h"
+
 
 class Game
 {
-  Config config; 
+	Config m_config;
+	std::string m_currentWorkingDirectory;
 
-  void readConfigFile();
+	bool m_isRunning = false;
+
+	EntityManager m_manager;
+
+	void spawnPlayer();
+
+	void systemRender();
+	void systemMovement();
+
+	void drawBackground();
+	bool readConfigFile(const std::string &pathToConfigFile);
+	static int rand(int min, int max);
 
 public:
-  Game(std::string configFilePath);
-  void run();
+	Game(const char *currentWorkingDirectory);
+	~Game();
+	void run();
 };
