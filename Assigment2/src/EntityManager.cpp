@@ -31,9 +31,14 @@ EntitiesVector& EntityManager::getEntities(const std::string& tag)
 	return m_entitiesMap[tag];
 }
 
+bool EntityManager::isEntitytNotAlive(std::shared_ptr<Entity> entity)
+{
+	return !(entity->m_alive);
+}
+ 
 void EntityManager::update()
 {
-	//std::remove_if(m_entities.begin(), 
-	//			   m_entities.end(), 
-	//			   [] (std::shared_ptr<Entity> e) { return !(e->m_alive); });
+	std::remove_if(m_entities.begin(), 
+				   m_entities.end(), 
+				   [] (std::shared_ptr<Entity> e) { return !(e->m_alive); });
 }

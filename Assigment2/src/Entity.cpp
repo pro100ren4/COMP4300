@@ -1,5 +1,7 @@
 #include "Entity.h"
 
+#include <raylib.h>
+
 Entity::Entity(const size_t id, const std::string& tag)
 	: m_ID(id)
 	, m_tag(tag)
