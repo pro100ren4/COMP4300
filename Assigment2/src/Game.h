@@ -19,6 +19,7 @@ class Game
 
 	void systemRender();
 	void systemMovement();
+	void systemPlayer();
 
 	void drawBackground();
 	bool readConfigFile(const std::string &pathToConfigFile);

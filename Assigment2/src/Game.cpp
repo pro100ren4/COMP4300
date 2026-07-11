@@ -196,13 +196,66 @@ void Game::systemRender()
 
 void Game::systemMovement()
 {
+	EntitiesVector players = m_manager.getEntities("Player");
+
+	for (auto& player : players)
+	{
+		if (player->transform)
+		{
+			player->transform->angle += 5.f;
+
+			Vec2 playerDirection;
+
+			player->transform->velocity = playerDirection * m_config.player.speed;
+
+			if (player->input)
+			{
+				if (player->input->up)
+					playerDirection.y = -1;
+				if (player->input->down)
+					playerDirection.y = +1;
+				if (player->input->left)
+					playerDirection.x = -1;
+				if (player->input->right)
+					playerDirection.x = +1;
+			}
+
+			player->transform->velocity = playerDirection * m_config.player.speed;
+		}
+	}
+	
 	EntitiesVector entities = m_manager.getEntities();
 
 	for (auto& entity : entities)
 	{
 		if (entity->transform)
 		{
+			entity->transform->position += entity->transform->velocity;
+		}
+	}
+}
 
+void Game::systemPlayer()
+{
+	EntitiesVector entities = m_manager.getEntities("Player");
+
+	for (auto& entity : entities)
+	{
+		if (entity->input)
+		{
+			entity->input->up = false;
+			entity->input->down = false;
+			entity->input->left = false;
+			entity->input->right = false;
+
+			if (IsKeyDown(KEY_W))
+				entity->input->up = true;
+			if (IsKeyDown(KEY_S))
+				entity->input->down = true;
+			if (IsKeyDown(KEY_A))
+				entity->input->left = true;
+			if (IsKeyDown(KEY_D))
+				entity->input->right = true;
 		}
 	}
 }
@@ -251,12 +304,13 @@ void Game::run()
 		if (!m_isRunning)
 			continue;
 
+		systemPlayer();
 
 		/* RENDERING */
 		BeginDrawing();
 
 		systemRender();
-		systemTransform();
+		systemMovement();
 
 		EndDrawing();
 	}
