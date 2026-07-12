@@ -51,7 +51,9 @@ class CScore
 public:
     int score = 0;
 
-    CScore() {}
+    CScore(int score)
+      : score(score)
+    {}
 };
 
 class CInput
@@ -61,8 +63,12 @@ public:
     bool down = false;
     bool left = false;
     bool right = false;
+    bool shoot = false;
+    Vec2 shootTarget;
 
-    CInput() {}
+    CInput()
+      : shootTarget(0, 0)
+    {}
 };
 
 class CTimer

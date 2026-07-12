@@ -14,6 +14,7 @@ class EntityManager {
 	size_t m_totalEntities = 0;
 
 	EntitiesVector m_entities;
+	EntitiesVector m_entitiesToAdd;
 	EntitiesMap m_entitiesMap;
 	
 public:
@@ -26,5 +27,5 @@ public:
 	EntitiesVector& getEntities(const std::string &tag);
 
 	void update();
-	bool isEntitytNotAlive(std::shared_ptr<Entity> entity);
+	bool isEntityNotAlive(std::shared_ptr<Entity> entity);
 };

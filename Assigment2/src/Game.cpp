@@ -35,6 +35,12 @@ void Game::drawBackground()
   }
 }
 
+void Game::drawScore()
+{
+  std::string scorePointsText = "Score: " + std::to_string(m_score);
+  DrawTextEx(m_font, scorePointsText.c_str(), Vector2{0, 0}, m_config.font.size, 1.f, m_config.font.color);
+}
+
 bool Game::readConfigFile(const std::string& pathToConfigFile)
 {
   std::ifstream configFile(m_currentWorkingDirectory + pathToConfigFile);
@@ -164,6 +170,53 @@ void Game::spawnPlayer()
   player->input = std::make_shared<CInput>();
 }
 
+void Game::spawnEnemy()
+{
+  Color enemyColors[] = {
+    RED,
+    GREEN,
+    BLUE,
+    WHITE,
+    GRAY,
+    BLACK
+  };
+
+  int enemyNumberSides = rand(m_config.enemy.minSidesNumber, 
+                              m_config.enemy.maxSidesNumber);
+
+  Vec2 enemyPosition = Vec2(
+    static_cast<float>(rand(0 + m_config.enemy.shapeRadius, m_config.window.width - m_config.enemy.shapeRadius)),
+    static_cast<float>(rand(0 + m_config.enemy.shapeRadius, m_config.window.height - m_config.enemy.shapeRadius))
+  );
+
+  Vec2 enemyVelocity = Vec2(
+    static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed)),
+    static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed))
+  );
+
+  Color enemyColor = enemyColors[enemyNumberSides % 6];
+
+  auto enemy = m_manager.addEntity("Enemy");
+  enemy->transform = std::make_shared<CTransform>(
+    enemyPosition,
+    enemyVelocity,
+    0.f);
+
+  enemy->shape = std::make_shared<CShape>(
+    enemyNumberSides,
+    m_config.enemy.outlineColor,
+    enemyColor,
+    m_config.enemy.outlineThickness,
+    m_config.enemy.shapeRadius);
+
+  enemy->collision = std::make_shared<CCollision>(
+    m_config.enemy.collisionRadius);
+
+  enemy->score = std::make_shared<CScore>(enemyNumberSides * 100);
+
+  
+
+}
 
 void Game::systemRender()
 {
@@ -192,7 +245,16 @@ void Game::systemRender()
         entity->shape->thickness,
         entity->shape->outline);
     }
+
+    if (entity->input)
+    {
+      float x = entity->input->shootTarget.x;
+      float y = entity->input->shootTarget.y;
+      DrawRectangle(x - 5, y - 5, 10, 10, WHITE);
+    }
   }
+
+  drawScore();
 }
 
 void Game::systemMovement()
@@ -204,9 +266,26 @@ void Game::systemMovement()
   {
     if (entity->transform)
     {
+      if (entity->transform->position.x < 0 ||
+          entity->transform->position.x > m_config.window.width)
+      {
+        entity->transform->velocity.x = -(entity->transform->velocity.x);
+      }
+
+      if (entity->transform->position.y < 0 ||
+          entity->transform->position.y > m_config.window.height)
+      {
+        entity->transform->velocity.y = -(entity->transform->velocity.y);
+      }
+
       entity->transform->position += entity->transform->velocity;
     }
   }
+}
+
+void Game::systemCollision()
+{
+
 }
 
 void Game::systemPlayer()
@@ -261,6 +340,7 @@ void Game::clearInputs()
       entity->input->down = false;
       entity->input->left = false;
       entity->input->right = false;
+      entity->input->shoot = false;
     }
   }
 }
@@ -283,6 +363,10 @@ void Game::systemInput()
           entity->input->left = true;
       if (IsKeyDown(KEY_D))
           entity->input->right = true;
+      if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+        entity->input->shoot = true;
+
+      entity->input->shootTarget = Vec2(GetMouseX(), GetMouseY());
     }
   }
 }
@@ -291,7 +375,7 @@ Game::Game(const char* currentWorkingDirectory)
   : m_currentWorkingDirectory(currentWorkingDirectory)
 {
 
-  if (!readConfigFile(std::string("\\res\\config.txt")))
+  if (!readConfigFile(std::string("res\\config.txt")))
   {
     std::cerr << "Failed to create config" << std::endl;
   }
@@ -307,10 +391,16 @@ Game::Game(const char* currentWorkingDirectory)
     ToggleFullscreen();
   }
 
+  std::string fontFileAbsolutePath = m_currentWorkingDirectory + m_config.font.name;
+  m_font = LoadFontEx(fontFileAbsolutePath.c_str(), m_config.font.size, nullptr, 0);
+  if (!IsFontValid(m_font))
+  {
+    std::cerr << "Failed to load font: " << fontFileAbsolutePath << std::endl;
+  }
+
   // ENTITIES
   spawnPlayer();
-
-  m_isRunning = true;
+  m_manager.update();
 }
 
 Game::~Game()
@@ -318,26 +408,43 @@ Game::~Game()
   CloseWindow();
 }
 
+void Game::destroyPlayer() {}
+
+void Game::destroyEnemy() {}
+
 void Game::run()
 {
   while (!WindowShouldClose())
   {
     /* INPUT */
 
+    /* 
+     * Здесь находятся некоторые обработки ввода, которые необходимо выполнить
+     * до того как это сделает система ввода (пауза например)
+     */
+    
+
     systemInput();
 
     /* UPDATE STATE */
 
-    if (!m_isRunning)
-      continue;
+    m_enemyTimer++;
+    if (m_enemyTimer >= m_config.enemy.spawnInterval)
+    {
+      m_enemyTimer = 0;
+      m_score++;
+      spawnEnemy();
+    }
 
     systemPlayer();
+    systemMovement();
+
+    m_manager.update();
 
     /* RENDERING */
     BeginDrawing();
 
     systemRender();
-    systemMovement();
 
     EndDrawing();
   }
