@@ -20,6 +20,7 @@ class Game
 
 	void spawnPlayer();
 	void spawnEnemy();
+	void spawnBullet();
 
 	void destroyPlayer();
 	void destroyEnemy();
@@ -30,6 +31,7 @@ class Game
   void systemInput();
   void systemCollision();
 
+  bool checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
   void clearInputs();
 	void drawBackground();
   void drawScore();

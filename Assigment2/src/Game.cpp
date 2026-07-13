@@ -12,7 +12,6 @@
 
 void Game::drawBackground()
 {
-  
   int blockSize = 50;
   bool Switch = false;
 
@@ -38,7 +37,14 @@ void Game::drawBackground()
 void Game::drawScore()
 {
   std::string scorePointsText = "Score: " + std::to_string(m_score);
-  DrawTextEx(m_font, scorePointsText.c_str(), Vector2{0, 0}, m_config.font.size, 1.f, m_config.font.color);
+  DrawTextEx(
+      m_font,
+      scorePointsText.c_str(),
+      Vector2{0, 0},
+      static_cast<float>(m_config.font.size),
+      1.f,
+      m_config.font.color
+  );
 }
 
 bool Game::readConfigFile(const std::string& pathToConfigFile)
@@ -214,8 +220,6 @@ void Game::spawnEnemy()
 
   enemy->score = std::make_shared<CScore>(enemyNumberSides * 100);
 
-  
-
 }
 
 void Game::systemRender()
@@ -259,7 +263,6 @@ void Game::systemRender()
 
 void Game::systemMovement()
 {
-  
   EntitiesVector entities = m_manager.getEntities();
 
   for (auto& entity : entities)
@@ -283,9 +286,46 @@ void Game::systemMovement()
   }
 }
 
+bool Game::checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2)
+{
+  float collisonDistance = e1->collision->radius + e2->collision->radius;
+
+  if (e1->transform->position.distance(e2->transform->position) < collisonDistance)
+  {
+    return true;
+  }
+
+  return false;
+}
+
 void Game::systemCollision()
 {
+  EntitiesVector players = m_manager.getEntities("Player");
+  EntitiesVector enemies = m_manager.getEntities("Enemy");
 
+  for (auto &player: players)
+  {
+    for (auto &enemy: enemies)
+    {
+      if (player->collision && enemy->collision)
+      {
+        if (checkCollision(player, enemy))
+        {
+          // FIXME: Почему-то при смерти Player начинает постоянно умирать и
+          // возрождаться.
+          std::cout << "DIE" << std::endl;
+          player->destroy();
+          enemy->destroy();
+          spawnPlayer();
+          break;
+        }
+      }
+    }
+  }
+}
+
+void Game::spawnBullet() {
+  std::cout << "SHOOOT" << std::endl;
 }
 
 void Game::systemPlayer()
@@ -306,12 +346,13 @@ void Game::systemPlayer()
         playerDirection.x = -1;
       if (player->input->right)
         playerDirection.x = +1;
+      if (player->input->shoot)
+        spawnBullet();
 
       player->transform->velocity = playerDirection * m_config.player.speed;
       player->transform->angle += 5.f;
     }
   }
-  
 
   EntitiesVector entities = m_manager.getEntities("Player");
 
@@ -332,10 +373,10 @@ void Game::clearInputs()
   {
     if (entity->input)
     {
-      // Обнуляет все поля компонента ввода. Возможно требуется переработать
-      // компонент ввода, т.к. если в дальнейшем понадобиться его расширять
-      // сюда надо будет добавлять обнуление каждого добавленного поля 
-      // компонента.
+      // XXX: Обнуляет все поля компонента ввода. Возможно требуется 
+      // переработатькомпонент ввода, т.к. если в дальнейшем понадобиться его 
+      // расширять сюда надо будет добавлять обнуление каждого добавленного  
+      // поля компонента.
       entity->input->up = false;
       entity->input->down = false;
       entity->input->left = false;
@@ -356,17 +397,20 @@ void Game::systemInput()
     if (entity->input)
     {
       if (IsKeyDown(KEY_W))
-          entity->input->up = true;
+        entity->input->up = true;
       if (IsKeyDown(KEY_S))
-          entity->input->down = true;
+        entity->input->down = true;
       if (IsKeyDown(KEY_A))
-          entity->input->left = true;
+        entity->input->left = true;
       if (IsKeyDown(KEY_D))
-          entity->input->right = true;
+        entity->input->right = true;
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         entity->input->shoot = true;
 
-      entity->input->shootTarget = Vec2(GetMouseX(), GetMouseY());
+      entity->input->shootTarget = Vec2(
+        static_cast<float>(GetMouseX()),
+        static_cast<float>(GetMouseY())
+      );
     }
   }
 }
@@ -418,13 +462,8 @@ void Game::run()
   {
     /* INPUT */
 
-    /* 
-     * Здесь находятся некоторые обработки ввода, которые необходимо выполнить
-     * до того как это сделает система ввода (пауза например)
-     */
-    
-
     systemInput();
+
 
     /* UPDATE STATE */
 
@@ -438,10 +477,13 @@ void Game::run()
 
     systemPlayer();
     systemMovement();
+    systemCollision();
 
     m_manager.update();
 
+
     /* RENDERING */
+
     BeginDrawing();
 
     systemRender();

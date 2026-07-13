@@ -45,6 +45,9 @@ void Vec2::operator*=(float value)
 
 float Vec2::distance(const Vec2& destination) const
 {
-	return sqrtf(x * x + y * y);
+  float dx = x - destination.x;
+  float dy = y - destination.y;
+
+	return sqrtf(dx * dx + dy * dy);
 }
 
