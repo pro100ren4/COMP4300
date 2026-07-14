@@ -290,12 +290,14 @@ bool Game::checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2
 {
   float collisonDistance = e1->collision->radius + e2->collision->radius;
 
-  if (e1->transform->position.distance(e2->transform->position) < collisonDistance)
+  if (e1->transform->position.distance(e2->transform->position) <= collisonDistance)
   {
     return true;
   }
-
-  return false;
+  else
+  {
+    return false;
+  }
 }
 
 void Game::systemCollision()
@@ -311,13 +313,14 @@ void Game::systemCollision()
       {
         if (checkCollision(player, enemy))
         {
-          // FIXME: Почему-то при смерти Player начинает постоянно умирать и
-          // возрождаться.
-          std::cout << "DIE" << std::endl;
+          // FIXME: Почему-то при смерти игрок умирает бесконечно. Возможно
+          // тут произошла инвалидация итераторов и програма начала чудить.
+          // Необходимо отдельно протестировать менеджер сущьностей на
+          // вшивость.
+          std::cout << "DIE player: " << player << " enemy: " << enemy << std::endl;
           player->destroy();
           enemy->destroy();
-          spawnPlayer();
-          break;
+          // spawnPlayer();
         }
       }
     }
@@ -404,7 +407,7 @@ void Game::systemInput()
         entity->input->left = true;
       if (IsKeyDown(KEY_D))
         entity->input->right = true;
-      if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         entity->input->shoot = true;
 
       entity->input->shootTarget = Vec2(

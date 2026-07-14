@@ -45,8 +45,7 @@ void EntityManager::update()
   m_entitiesToAdd.clear();
 
   m_entities.erase(
-	std::remove_if(m_entities.begin(), 
-				   m_entities.end(), 
-				   [] (std::shared_ptr<Entity> e) { return !(e->m_alive); }),
-				   m_entities.end());
+	  std::remove_if(m_entities.begin(), m_entities.end(), [] (std::shared_ptr<Entity> e) { return !(e->m_alive); }),
+	  m_entities.end()
+  );
 }
