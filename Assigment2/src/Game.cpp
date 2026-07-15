@@ -242,17 +242,11 @@ void Game::systemCollision()
 
       float collisonDistance = 
           m_player->collision->radius + enemies[e_idx]->collision->radius;
-      bool isColliding = 
-          m_player->transform->position.distance(enemies[e_idx]->transform->position) 
-          <= collisonDistance;
+      float entitiesDistance =
+          m_player->transform->position.distance(enemies[e_idx]->transform->position);
 
-      if (isColliding)
+      if (entitiesDistance <= collisonDistance)
       {
-        // FIXME: Почему-то при смерти игрок умирает бесконечно. Возможно
-        // тут произошла инвалидация итераторов и програма начала чудить.
-        // Менеджер сущностей проверен и это не это (он отрабатывает
-        // корректно). Видимо проблема в логике обработки сущностей.
-        std::cout << "DIE " << m_player << std::endl;
         enemies[e_idx]->destroy();
         killPlayer(); 
       }
@@ -526,7 +520,7 @@ Game::~Game()
 
 void Game::run()
 {
-  while (!WindowShouldClose())
+  while (!WindvecowShouldClose())
   {
     /********************************************
      * Пользовательский ввод
