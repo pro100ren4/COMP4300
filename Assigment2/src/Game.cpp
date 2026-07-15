@@ -203,6 +203,33 @@ void Game::systemRender()
           WHITE
       );
     }
+
+    if (!m_isRunning)
+    {
+      DrawRectangle(
+          0, 0,
+          m_config.window.width, m_config.window.height,
+          Color{0, 0, 0, 125});
+      
+      Vector2 textSize = MeasureTextEx(
+          m_font, "Pause",
+          static_cast<float>(m_config.font.size) * 1.5f, 1.f);
+
+      Vector2 pauseTextPos {
+        m_config.window.width / 2 - textSize.x / 2, 
+        m_config.window.height / 2 - textSize.y / 2, 
+      };
+
+      DrawTextEx(
+          m_font,
+          "Pause",
+          pauseTextPos,
+          static_cast<float>(m_config.font.size) * 1.5f,
+          1.f,
+          m_config.font.color
+      );
+
+    }
   }
 
   drawScore();
@@ -653,10 +680,11 @@ Game::Game(const char* currentWorkingDirectory)
   {
     std::cerr << "Failed to load font: " << fontFileAbsolutePath << std::endl;
   }
+  
+  m_isRunning = true;
 
   // ENTITIES
   spawnPlayer();
-  m_manager.update();
 }
 
 Game::~Game()
@@ -672,21 +700,26 @@ void Game::run()
      * Пользовательский ввод
      ********************************************/
 
+    if (IsKeyPressed(KEY_P))
+      m_isRunning = !m_isRunning;
+
     systemInput();
 
 
     /********************************************
      * Обновление состояние игры 
      ********************************************/
+    if (m_isRunning)
+    {
+      systemPlayer();
+      systemEnemies();
+      systemBullets();
+      systemMovement();
+      systemCollision();
+      systemTimer();
 
-    systemPlayer();
-    systemEnemies();
-    systemBullets();
-    systemMovement();
-    systemCollision();
-    systemTimer();
-
-    m_manager.update();
+      m_manager.update();
+    }
 
 
     /********************************************
