@@ -31,6 +31,13 @@ class Game
 	void systemEnemies();
   void systemInput();
   void systemCollision();
+  void systemBullets();
+  void systemTimer();
+
+  // Kill functions
+  void killPlayer();
+  void killEnemy(std::shared_ptr<Entity> enemy);
+  void killBullet(std::shared_ptr<Entity> bullet);
 
   // Utility functions
   bool readConfigFile(const std::string &pathToConfigFile);
@@ -41,7 +48,6 @@ class Game
   
   void clearInputs();
   bool checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
-  void killPlayer();
 	static int rand(int min, int max);
 
 public:

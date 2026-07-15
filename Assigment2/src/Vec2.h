@@ -8,7 +8,7 @@ public:
 
   Vec2() {};
   Vec2(float x, float y);
- 
+
   Vec2 operator+(const Vec2 &other);
   Vec2 operator-(const Vec2 &other);
   Vec2 operator*(float value);
@@ -18,5 +18,6 @@ public:
   void operator*=(float value);
 
   float distance(const Vec2 &destination) const;
+  Vec2 normilize();
 };
 

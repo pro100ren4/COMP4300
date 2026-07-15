@@ -4,8 +4,10 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 #include <raylib.h>
+#include <raymath.h>
 
 #include "Config.h"
 #include "EntityManager.h"
@@ -36,13 +38,13 @@ void Game::spawnPlayer()
 
 void Game::spawnEnemy()
 {
+
+  // TODO: Добавить более привлекательные цвета
   Color enemyColors[] = {
-    RED,
-    GREEN,
-    BLUE,
-    WHITE,
-    GRAY,
-    BLACK
+    Color{0xFF, 0xAF, 0xA5, 0xFF},
+    Color{0xBF, 0xCF, 0xFF, 0xFF},
+    Color{0xC8, 0xE7, 0xED, 0xFF},
+    Color{0xFF, 0xFF, 0xC2, 0xFF},
   };
 
   int enemyNumberSides = rand(m_config.enemy.minSidesNumber, 
@@ -58,7 +60,7 @@ void Game::spawnEnemy()
     static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed))
   );
 
-  Color enemyColor = enemyColors[enemyNumberSides % 6];
+  Color enemyColor = enemyColors[enemyNumberSides % 4];
 
   auto enemy = m_manager.addEntity("Enemy");
   enemy->transform = std::make_shared<CTransform>(
@@ -81,8 +83,66 @@ void Game::spawnEnemy()
 }
 
 void Game::spawnBullet() {
-  std::cout << "SHOOOT" << std::endl;
+  auto bullet = m_manager.addEntity("Bullet");
+
+  Vec2 bulletPosition = m_player->transform->position;
+  Vec2 bulletVelocity = m_player->input->shootTarget
+      - m_player->transform->position;
+  bulletVelocity = bulletVelocity.normilize() * m_config.bullet.speed;
+
+  bullet->transform = std::make_shared<CTransform>(
+      bulletPosition,
+      bulletVelocity,
+      0.f);
+
+  bullet->collision = std::make_shared<CCollision>(
+      m_config.bullet.collisionRadius);
+  
+  bullet->shape = std::make_shared<CShape>(
+      0,
+      m_config.bullet.outlineColor,
+      m_config.bullet.fillColor,
+      m_config.bullet.outlineThickness,
+      m_config.bullet.shapeRadius);
+
+  bullet->timer = std::make_shared<CTimer>(m_config.bullet.bulletLifetime);
 }
+
+void Game::systemTimer()
+{
+  EntitiesVector entities = m_manager.getEntities();
+
+  for (auto &entity: entities)
+  {
+    if (!(entity->timer))
+      continue;
+
+    if (entity->timer->currentCount == 0)
+      entity->destroy();
+    else 
+      entity->timer->currentCount--;
+
+    if (!(entity->shape))
+      continue;
+
+    float alphaNormilized = 
+      static_cast<float>(entity->timer->currentCount) / 
+      static_cast<float>(entity->timer->totalCount);
+
+    // NOTE: Каким-то образом текущее значение таймера оказалось больше, чем
+    // его значение при инициализации. Это может привести к переполнению
+    // значению альфа канала цвета, т.к. множитель альфа-канала не
+    // нормализуется корректно.
+    if (entity->timer->currentCount > entity->timer->totalCount)
+      std::cerr << "Timer value greater than it should be ("
+                << entity->timer->currentCount << "/"
+                << entity->timer->totalCount << ")" << std::endl;
+
+    entity->shape->fill.a = static_cast<uint8_t>(alphaNormilized * 255);
+
+  }
+}
+
 
 /******************************************************************************
  * SYSTEMS
@@ -98,24 +158,40 @@ void Game::systemRender()
   {
     if (entity->shape && entity->transform)
     {
-      Vector2 temp = {};
-      temp.x = entity->transform->position.x;
-      temp.y = entity->transform->position.y;
-      DrawPoly(
-        temp,
-        static_cast<int>(entity->shape->numberVerticies),
-        entity->shape->radius,
-        entity->transform->angle,
-        entity->shape->fill);
-      DrawPolyLinesEx(
-        temp,
-        static_cast<int>(entity->shape->numberVerticies),
-        entity->shape->radius,
-        entity->transform->angle,
-        entity->shape->thickness,
-        entity->shape->outline);
-    }
+      Vector2 entityPositon = {};
+      entityPositon.x = entity->transform->position.x;
+      entityPositon.y = entity->transform->position.y;
 
+      if (entity->shape->numberVerticies < 3)
+      {
+        DrawCircleV(
+            entityPositon,
+            entity->shape->radius,
+            entity->shape->fill);
+        DrawCircleLinesV(
+            entityPositon,
+            entity->shape->radius,
+            entity->shape->outline);
+      }
+      else
+      {
+        DrawPoly(
+          entityPositon,
+          static_cast<int>(entity->shape->numberVerticies),
+          entity->shape->radius,
+          entity->transform->angle,
+          entity->shape->fill);
+        DrawPolyLinesEx(
+          entityPositon,
+          static_cast<int>(entity->shape->numberVerticies),
+          entity->shape->radius,
+          entity->transform->angle,
+          entity->shape->thickness,
+          entity->shape->outline);
+      }
+    }
+    
+    // Drawing Cursor
     if (entity->input)
     {
       float x = entity->input->shootTarget.x;
@@ -130,7 +206,7 @@ void Game::systemRender()
   }
 
   drawScore();
-  drawPlayerPosition();
+  // drawPlayerPosition();
 }
 
 
@@ -192,7 +268,6 @@ void Game::systemEnemies()
   if (m_enemyTimer >= m_config.enemy.spawnInterval)
   {
     m_enemyTimer = 0;
-    m_score++;
     spawnEnemy();
   }
 }
@@ -253,6 +328,97 @@ void Game::systemCollision()
     }
   }
 }
+
+
+void Game::systemBullets()
+{
+  EntitiesVector bullets = m_manager.getEntities("Bullet");
+  EntitiesVector enemies = m_manager.getEntities("Enemy");
+
+  if (bullets.size() == 0 || enemies.size() == 0)
+    return;
+
+  for (auto &bullet: bullets)
+  {
+    for (auto &enemy: enemies)
+    {
+      if (!(bullet->collision) || !(enemy->collision))
+        continue;
+      
+      if (checkCollision(bullet, enemy))
+      {
+        m_score += enemy->score->score;
+
+        killBullet(bullet);
+        killEnemy(enemy);
+      }
+      
+    }
+  }
+}
+
+/******************************************************************************
+ * KILL 
+ *****************************************************************************/
+
+void Game::killPlayer()
+{
+  if (!m_player)
+    return;
+
+  if (m_player->transform)
+  {
+    m_player->transform->position.x = static_cast<float>(m_config.window.width / 2);
+    m_player->transform->position.y = static_cast<float>(m_config.window.height / 2);
+  }
+  else
+  {
+    std::cerr << "Player doesn't have \"Transform\" component."
+              << "That strange."
+              << std::endl;
+  }
+}
+
+void Game::killEnemy(std::shared_ptr<Entity> enemy)
+{
+  if (!enemy)
+    return;
+
+  float angleStep = DEG2RAD * 360.f / enemy->shape->numberVerticies;
+
+  // Spawning particles
+  for (size_t i = 0; i < enemy->shape->numberVerticies; ++i)
+  {
+    auto particle = m_manager.addEntity("Particle");
+
+    particle->transform = std::make_shared<CTransform>(
+        enemy->transform->position,
+        Vec2(sinf(i * angleStep), cosf(i * angleStep)),
+        0.f);
+
+    particle->shape = std::make_shared<CShape>(
+        enemy->shape->numberVerticies,
+        enemy->shape->outline,
+        enemy->shape->fill,
+        enemy->shape->thickness / 3.f,
+        enemy->shape->radius / 3.f);
+
+    particle->timer = std::make_shared<CTimer>(m_config.enemy.particleLifetime);
+      
+  }
+
+  enemy->destroy();
+
+}
+
+void Game::killBullet(std::shared_ptr<Entity> bullet)
+{
+  if (!bullet)
+    return;
+
+  bullet->destroy();
+}
+
 
 /******************************************************************************
  * UTILITY
@@ -454,26 +620,6 @@ bool Game::checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2
   }
 }
 
-void Game::killPlayer()
-{
-  if (!m_player)
-  {
-    return;
-  }
-
-  if (m_player->transform)
-  {
-    m_player->transform->position.x = static_cast<float>(m_config.window.width / 2);
-    m_player->transform->position.y = static_cast<float>(m_config.window.height / 2);
-  }
-  else
-  {
-    std::cerr << "Player doesn't have \"Transform\" component."
-              << "That strange."
-              << std::endl;
-  }
-}
-
 int Game::rand(int min, int max)
 {
   return min + (::rand() % (max - min + 1));
@@ -520,7 +666,7 @@ Game::~Game()
 
 void Game::run()
 {
-  while (!WindvecowShouldClose())
+  while (!WindowShouldClose())
   {
     /********************************************
      * Пользовательский ввод
@@ -535,8 +681,10 @@ void Game::run()
 
     systemPlayer();
     systemEnemies();
+    systemBullets();
     systemMovement();
     systemCollision();
+    systemTimer();
 
     m_manager.update();
 

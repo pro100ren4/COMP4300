@@ -27,7 +27,11 @@ public:
     float thickness;
     float radius;
 
-    CShape(const size_t numberVerticies, const Color& outline, const Color& fill, float thickness, float radius)
+    CShape(const size_t numberVerticies,
+           const Color& outline,
+           const Color& fill,
+           float thickness,
+           float radius)
         : numberVerticies(numberVerticies)
         , outline(outline)
         , fill(fill)
