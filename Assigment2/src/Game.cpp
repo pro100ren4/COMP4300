@@ -200,8 +200,7 @@ void Game::systemRender()
           static_cast<int>(x) - 5,
           static_cast<int>(y) - 5,
           10, 10,
-          WHITE
-      );
+          WHITE);
     }
 
     if (!m_isRunning)
@@ -226,14 +225,12 @@ void Game::systemRender()
           pauseTextPos,
           static_cast<float>(m_config.font.size) * 1.5f,
           1.f,
-          m_config.font.color
-      );
+          m_config.font.color);
 
     }
   }
 
   drawScore();
-  // drawPlayerPosition();
 }
 
 
@@ -395,8 +392,10 @@ void Game::killPlayer()
 
   if (m_player->transform)
   {
-    m_player->transform->position.x = static_cast<float>(m_config.window.width / 2);
-    m_player->transform->position.y = static_cast<float>(m_config.window.height / 2);
+    m_player->transform->position.x = 
+      static_cast<float>(m_config.window.width / 2);
+    m_player->transform->position.y = 
+      static_cast<float>(m_config.window.height / 2);
   }
   else
   {
@@ -591,8 +590,7 @@ void Game::drawScore()
       Vector2{0, 0},
       static_cast<float>(m_config.font.size),
       1.f,
-      m_config.font.color
-  );
+      m_config.font.color);
 }
 
 void Game::drawPlayerPosition()
@@ -606,8 +604,7 @@ void Game::drawPlayerPosition()
       Vector2{0, static_cast<float>(m_config.font.size + 5)},
       static_cast<float>(m_config.font.size),
       1.f,
-      m_config.font.color
-  );
+      m_config.font.color);
 }
 
 void Game::clearInputs()
