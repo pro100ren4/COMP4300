@@ -17,25 +17,31 @@ class Game
   int m_score = 0;
 
 	EntityManager m_manager;
+  std::shared_ptr<Entity> m_player;
 
+  // Spawn functions
 	void spawnPlayer();
 	void spawnEnemy();
 	void spawnBullet();
 
-	void destroyPlayer();
-	void destroyEnemy();
-
+  // Systems
 	void systemRender();
 	void systemMovement();
 	void systemPlayer();
+	void systemEnemies();
   void systemInput();
   void systemCollision();
 
-  bool checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
-  void clearInputs();
-	void drawBackground();
+  // Utility functions
+  bool readConfigFile(const std::string &pathToConfigFile);
+
+  void drawBackground();
   void drawScore();
-	bool readConfigFile(const std::string &pathToConfigFile);
+  void drawPlayerPosition();
+  
+  void clearInputs();
+  bool checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
+  void killPlayer();
 	static int rand(int min, int max);
 
 public:

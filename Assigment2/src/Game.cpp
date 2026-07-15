@@ -10,43 +10,259 @@
 #include "Config.h"
 #include "EntityManager.h"
 
-void Game::drawBackground()
+
+/******************************************************************************
+ * SPAWN FUNCTIONS
+ *****************************************************************************/
+
+void Game::spawnPlayer()
 {
-  int blockSize = 50;
-  bool Switch = false;
+  m_player = m_manager.addEntity("Player");
+  m_player->transform = std::make_shared<CTransform>(
+    Vec2(static_cast<float>(m_config.window.width / 2),
+         static_cast<float>(m_config.window.height / 2)),
+    Vec2(0, 0),
+    0.f);
+  m_player->shape = std::make_shared<CShape>(
+    m_config.player.sidesNumber,
+    m_config.player.outlineColor,
+    m_config.player.fillColor,
+    m_config.player.thickness,
+    m_config.player.shapeRadius);
 
-  Color primaryColor{0x52, 0x61, 0x6B, 0xFF}; // #52616b
-  Color secondaryColor{0x1E, 0x20, 0x22, 0xFF }; // #1e2022
+  m_player->collision = std::make_shared<CCollision>(m_config.player.collisionRadius);
+  m_player->input = std::make_shared<CInput>();
+}
 
-  for (int y = 0; y < m_config.window.height; y += blockSize)
+void Game::spawnEnemy()
+{
+  Color enemyColors[] = {
+    RED,
+    GREEN,
+    BLUE,
+    WHITE,
+    GRAY,
+    BLACK
+  };
+
+  int enemyNumberSides = rand(m_config.enemy.minSidesNumber, 
+                              m_config.enemy.maxSidesNumber);
+
+  Vec2 enemyPosition = Vec2(
+    static_cast<float>(rand(0 + m_config.enemy.shapeRadius, m_config.window.width - m_config.enemy.shapeRadius)),
+    static_cast<float>(rand(0 + m_config.enemy.shapeRadius, m_config.window.height - m_config.enemy.shapeRadius))
+  );
+
+  Vec2 enemyVelocity = Vec2(
+    static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed)),
+    static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed))
+  );
+
+  Color enemyColor = enemyColors[enemyNumberSides % 6];
+
+  auto enemy = m_manager.addEntity("Enemy");
+  enemy->transform = std::make_shared<CTransform>(
+    enemyPosition,
+    enemyVelocity,
+    0.f);
+
+  enemy->shape = std::make_shared<CShape>(
+    enemyNumberSides,
+    m_config.enemy.outlineColor,
+    enemyColor,
+    m_config.enemy.outlineThickness,
+    m_config.enemy.shapeRadius);
+
+  enemy->collision = std::make_shared<CCollision>(
+    m_config.enemy.collisionRadius);
+
+  enemy->score = std::make_shared<CScore>(enemyNumberSides * 100);
+
+}
+
+void Game::spawnBullet() {
+  std::cout << "SHOOOT" << std::endl;
+}
+
+/******************************************************************************
+ * SYSTEMS
+ *****************************************************************************/
+
+void Game::systemRender()
+{
+  drawBackground();
+
+  EntitiesVector entities = m_manager.getEntities();
+
+  for (auto& entity : entities)
   {
-    for (int x = 0; x < m_config.window.width; x += blockSize)
+    if (entity->shape && entity->transform)
     {
-      if (Switch)
-        DrawRectangle(x, y, blockSize, blockSize, primaryColor);
-      else
-        DrawRectangle(x, y, blockSize, blockSize, secondaryColor);
-
-      Switch = !Switch;
+      Vector2 temp = {};
+      temp.x = entity->transform->position.x;
+      temp.y = entity->transform->position.y;
+      DrawPoly(
+        temp,
+        static_cast<int>(entity->shape->numberVerticies),
+        entity->shape->radius,
+        entity->transform->angle,
+        entity->shape->fill);
+      DrawPolyLinesEx(
+        temp,
+        static_cast<int>(entity->shape->numberVerticies),
+        entity->shape->radius,
+        entity->transform->angle,
+        entity->shape->thickness,
+        entity->shape->outline);
     }
 
-    Switch = !Switch;
+    if (entity->input)
+    {
+      float x = entity->input->shootTarget.x;
+      float y = entity->input->shootTarget.y;
+      DrawRectangle(
+          static_cast<int>(x) - 5,
+          static_cast<int>(y) - 5,
+          10, 10,
+          WHITE
+      );
+    }
+  }
+
+  drawScore();
+  drawPlayerPosition();
+}
+
+
+void Game::systemMovement()
+{
+  EntitiesVector entities = m_manager.getEntities();
+
+  for (auto& entity : entities)
+  {
+    if (entity->transform)
+    {
+      if (entity->transform->position.x < 0 ||
+          entity->transform->position.x > m_config.window.width)
+      {
+        entity->transform->velocity.x = -(entity->transform->velocity.x);
+      }
+
+      if (entity->transform->position.y < 0 ||
+          entity->transform->position.y > m_config.window.height)
+      {
+        entity->transform->velocity.y = -(entity->transform->velocity.y);
+      }
+
+      entity->transform->position += entity->transform->velocity;
+    }
   }
 }
 
-void Game::drawScore()
+void Game::systemPlayer()
 {
-  std::string scorePointsText = "Score: " + std::to_string(m_score);
-  DrawTextEx(
-      m_font,
-      scorePointsText.c_str(),
-      Vector2{0, 0},
-      static_cast<float>(m_config.font.size),
-      1.f,
-      m_config.font.color
-  );
+  if (!m_player)
+  {
+    return;
+  }
+
+  if (m_player->transform && m_player->input)
+  {
+    Vec2 playerDirection;
+
+    if (m_player->input->up)
+      playerDirection.y = -1;
+    if (m_player->input->down)
+      playerDirection.y = +1;
+    if (m_player->input->left)
+      playerDirection.x = -1;
+    if (m_player->input->right)
+      playerDirection.x = +1;
+    if (m_player->input->shoot)
+      spawnBullet();
+
+    m_player->transform->velocity = playerDirection * m_config.player.speed;
+    m_player->transform->angle += 5.f;
+  }
 }
 
+void Game::systemEnemies()
+{
+  m_enemyTimer++;
+  if (m_enemyTimer >= m_config.enemy.spawnInterval)
+  {
+    m_enemyTimer = 0;
+    m_score++;
+    spawnEnemy();
+  }
+}
+
+void Game::systemInput()
+{
+  clearInputs();
+
+  EntitiesVector entities = m_manager.getEntities();
+
+  for (auto &entity: entities)
+  {
+    if (entity->input)
+    {
+      if (IsKeyDown(KEY_W))
+        entity->input->up = true;
+      if (IsKeyDown(KEY_S))
+        entity->input->down = true;
+      if (IsKeyDown(KEY_A))
+        entity->input->left = true;
+      if (IsKeyDown(KEY_D))
+        entity->input->right = true;
+      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        entity->input->shoot = true;
+
+      entity->input->shootTarget = Vec2(
+        static_cast<float>(GetMouseX()),
+        static_cast<float>(GetMouseY())
+      );
+    }
+  }
+}
+
+void Game::systemCollision()
+{
+  EntitiesVector enemies = m_manager.getEntities("Enemy");
+
+  if (!m_player || enemies.size() == 0)
+  {
+    return;
+  }
+
+  for (size_t e_idx = 0; e_idx < enemies.size(); e_idx++)
+  {
+    if (m_player->collision && enemies[e_idx]->collision)
+    {
+
+      float collisonDistance = 
+          m_player->collision->radius + enemies[e_idx]->collision->radius;
+      bool isColliding = 
+          m_player->transform->position.distance(enemies[e_idx]->transform->position) 
+          <= collisonDistance;
+
+      if (isColliding)
+      {
+        // FIXME: Почему-то при смерти игрок умирает бесконечно. Возможно
+        // тут произошла инвалидация итераторов и програма начала чудить.
+        // Менеджер сущностей проверен и это не это (он отрабатывает
+        // корректно). Видимо проблема в логике обработки сущностей.
+        std::cout << "DIE " << m_player << std::endl;
+        enemies[e_idx]->destroy();
+        killPlayer(); 
+      }
+    }
+  }
+}
+
+/******************************************************************************
+ * UTILITY
+ *****************************************************************************/
 bool Game::readConfigFile(const std::string& pathToConfigFile)
 {
   std::ifstream configFile(m_currentWorkingDirectory + pathToConfigFile);
@@ -152,136 +368,80 @@ bool Game::readConfigFile(const std::string& pathToConfigFile)
   return true;
 }
 
-int Game::rand(int min, int max)
+
+
+
+void Game::drawBackground()
 {
-  return min + (::rand() % (max - min + 1));
-}
+  int blockSize = 50;
+  bool Switch = false;
 
-void Game::spawnPlayer()
-{
-  auto player = m_manager.addEntity("Player");
-  player->transform = std::make_shared<CTransform>(
-    Vec2(static_cast<float>(m_config.window.width / 2),
-         static_cast<float>(m_config.window.height / 2)),
-    Vec2(0, 0),
-    0.f);
-  player->shape = std::make_shared<CShape>(
-    m_config.player.sidesNumber,
-    m_config.player.outlineColor,
-    m_config.player.fillColor,
-    m_config.player.thickness,
-    m_config.player.shapeRadius);
+  Color primaryColor{0x52, 0x61, 0x6B, 0xFF}; // #52616b
+  Color secondaryColor{0x1E, 0x20, 0x22, 0xFF }; // #1e2022
 
-  player->collision = std::make_shared<CCollision>(m_config.player.collisionRadius);
-  player->input = std::make_shared<CInput>();
-}
-
-void Game::spawnEnemy()
-{
-  Color enemyColors[] = {
-    RED,
-    GREEN,
-    BLUE,
-    WHITE,
-    GRAY,
-    BLACK
-  };
-
-  int enemyNumberSides = rand(m_config.enemy.minSidesNumber, 
-                              m_config.enemy.maxSidesNumber);
-
-  Vec2 enemyPosition = Vec2(
-    static_cast<float>(rand(0 + m_config.enemy.shapeRadius, m_config.window.width - m_config.enemy.shapeRadius)),
-    static_cast<float>(rand(0 + m_config.enemy.shapeRadius, m_config.window.height - m_config.enemy.shapeRadius))
-  );
-
-  Vec2 enemyVelocity = Vec2(
-    static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed)),
-    static_cast<float>(rand(m_config.enemy.minSpeed, m_config.enemy.maxSpeed))
-  );
-
-  Color enemyColor = enemyColors[enemyNumberSides % 6];
-
-  auto enemy = m_manager.addEntity("Enemy");
-  enemy->transform = std::make_shared<CTransform>(
-    enemyPosition,
-    enemyVelocity,
-    0.f);
-
-  enemy->shape = std::make_shared<CShape>(
-    enemyNumberSides,
-    m_config.enemy.outlineColor,
-    enemyColor,
-    m_config.enemy.outlineThickness,
-    m_config.enemy.shapeRadius);
-
-  enemy->collision = std::make_shared<CCollision>(
-    m_config.enemy.collisionRadius);
-
-  enemy->score = std::make_shared<CScore>(enemyNumberSides * 100);
-
-}
-
-void Game::systemRender()
-{
-  drawBackground();
-
-  EntitiesVector entities = m_manager.getEntities();
-
-  for (auto& entity : entities)
+  for (int y = 0; y < m_config.window.height; y += blockSize)
   {
-    if (entity->shape && entity->transform)
+    for (int x = 0; x < m_config.window.width; x += blockSize)
     {
-      Vector2 temp = {};
-      temp.x = entity->transform->position.x;
-      temp.y = entity->transform->position.y;
-      DrawPoly(
-        temp,
-        static_cast<int>(entity->shape->numberVerticies),
-        entity->shape->radius,
-        entity->transform->angle,
-        entity->shape->fill);
-      DrawPolyLinesEx(
-        temp,
-        static_cast<int>(entity->shape->numberVerticies),
-        entity->shape->radius,
-        entity->transform->angle,
-        entity->shape->thickness,
-        entity->shape->outline);
+      if (Switch)
+        DrawRectangle(x, y, blockSize, blockSize, primaryColor);
+      else
+        DrawRectangle(x, y, blockSize, blockSize, secondaryColor);
+
+      Switch = !Switch;
     }
 
+    Switch = !Switch;
+  }
+}
+
+void Game::drawScore()
+{
+  std::string scorePointsText = "Score: " + std::to_string(m_score);
+  DrawTextEx(
+      m_font,
+      scorePointsText.c_str(),
+      Vector2{0, 0},
+      static_cast<float>(m_config.font.size),
+      1.f,
+      m_config.font.color
+  );
+}
+
+void Game::drawPlayerPosition()
+{
+  std::string posText = "Pos: " + std::to_string(m_player->transform->position.x) 
+                          + " " + std::to_string(m_player->transform->position.y);
+
+  DrawTextEx(
+      m_font,
+      posText.c_str(),
+      Vector2{0, static_cast<float>(m_config.font.size + 5)},
+      static_cast<float>(m_config.font.size),
+      1.f,
+      m_config.font.color
+  );
+}
+
+void Game::clearInputs()
+{
+   EntitiesVector entities = m_manager.getEntities();
+
+  for (auto &entity: entities)
+  {
     if (entity->input)
     {
-      float x = entity->input->shootTarget.x;
-      float y = entity->input->shootTarget.y;
-      DrawRectangle(x - 5, y - 5, 10, 10, WHITE);
-    }
-  }
-
-  drawScore();
-}
-
-void Game::systemMovement()
-{
-  EntitiesVector entities = m_manager.getEntities();
-
-  for (auto& entity : entities)
-  {
-    if (entity->transform)
-    {
-      if (entity->transform->position.x < 0 ||
-          entity->transform->position.x > m_config.window.width)
-      {
-        entity->transform->velocity.x = -(entity->transform->velocity.x);
-      }
-
-      if (entity->transform->position.y < 0 ||
-          entity->transform->position.y > m_config.window.height)
-      {
-        entity->transform->velocity.y = -(entity->transform->velocity.y);
-      }
-
-      entity->transform->position += entity->transform->velocity;
+      //
+      // XXX: Обнуляет все поля компонента ввода. Возможно требуется 
+      // переработатькомпонент ввода, т.к. если в дальнейшем понадобиться его 
+      // расширять сюда надо будет добавлять обнуление каждого добавленного  
+      // поля компонента.
+      // 
+      entity->input->up = false;
+      entity->input->down = false;
+      entity->input->left = false;
+      entity->input->right = false;
+      entity->input->shoot = false;
     }
   }
 }
@@ -300,123 +460,32 @@ bool Game::checkCollision(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2
   }
 }
 
-void Game::systemCollision()
+void Game::killPlayer()
 {
-  EntitiesVector players = m_manager.getEntities("Player");
-  EntitiesVector enemies = m_manager.getEntities("Enemy");
-
-  for (auto &player: players)
+  if (!m_player)
   {
-    for (auto &enemy: enemies)
-    {
-      if (player->collision && enemy->collision)
-      {
-        if (checkCollision(player, enemy))
-        {
-          // FIXME: Почему-то при смерти игрок умирает бесконечно. Возможно
-          // тут произошла инвалидация итераторов и програма начала чудить.
-          // Менеджер сущностей проверен и это не это (он отрабатывает
-          // корректно). Видимо проблема в логике обработки сущностей.
-          std::cout << "DIE player: " << player << " enemy: " << enemy << std::endl;
-          player->destroy();
-          enemy->destroy();
-          // spawnPlayer();
-        }
-      }
-    }
+    return;
+  }
+
+  if (m_player->transform)
+  {
+    m_player->transform->position.x = static_cast<float>(m_config.window.width / 2);
+    m_player->transform->position.y = static_cast<float>(m_config.window.height / 2);
+  }
+  else
+  {
+    std::cerr << "Player doesn't have \"Transform\" component."
+              << "That strange."
+              << std::endl;
   }
 }
 
-void Game::spawnBullet() {
-  std::cout << "SHOOOT" << std::endl;
-}
-
-void Game::systemPlayer()
+int Game::rand(int min, int max)
 {
-  EntitiesVector players = m_manager.getEntities("Player");
-
-  for (auto& player : players)
-  {
-    if (player->transform && player->input)
-    {
-      Vec2 playerDirection;
-
-      if (player->input->up)
-        playerDirection.y = -1;
-      if (player->input->down)
-        playerDirection.y = +1;
-      if (player->input->left)
-        playerDirection.x = -1;
-      if (player->input->right)
-        playerDirection.x = +1;
-      if (player->input->shoot)
-        spawnBullet();
-
-      player->transform->velocity = playerDirection * m_config.player.speed;
-      player->transform->angle += 5.f;
-    }
-  }
-
-  EntitiesVector entities = m_manager.getEntities("Player");
-
-  for (auto& entity : entities)
-  {
-    if (entity->input && entity->transform)
-    {
-      Vector2 playerDireciton = {};
-    }
-  }
+  return min + (::rand() % (max - min + 1));
 }
 
-void Game::clearInputs()
-{
-   EntitiesVector entities = m_manager.getEntities();
-
-  for (auto &entity: entities)
-  {
-    if (entity->input)
-    {
-      // XXX: Обнуляет все поля компонента ввода. Возможно требуется 
-      // переработатькомпонент ввода, т.к. если в дальнейшем понадобиться его 
-      // расширять сюда надо будет добавлять обнуление каждого добавленного  
-      // поля компонента.
-      entity->input->up = false;
-      entity->input->down = false;
-      entity->input->left = false;
-      entity->input->right = false;
-      entity->input->shoot = false;
-    }
-  }
-}
-
-void Game::systemInput()
-{
-  clearInputs();
-
-  EntitiesVector entities = m_manager.getEntities();
-
-  for (auto &entity: entities)
-  {
-    if (entity->input)
-    {
-      if (IsKeyDown(KEY_W))
-        entity->input->up = true;
-      if (IsKeyDown(KEY_S))
-        entity->input->down = true;
-      if (IsKeyDown(KEY_A))
-        entity->input->left = true;
-      if (IsKeyDown(KEY_D))
-        entity->input->right = true;
-      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-        entity->input->shoot = true;
-
-      entity->input->shootTarget = Vec2(
-        static_cast<float>(GetMouseX()),
-        static_cast<float>(GetMouseY())
-      );
-    }
-  }
-}
+/*****************************************************************************/
 
 Game::Game(const char* currentWorkingDirectory)
   : m_currentWorkingDirectory(currentWorkingDirectory)
@@ -428,8 +497,8 @@ Game::Game(const char* currentWorkingDirectory)
   }
 
   // WINDOW
-  InitWindow(m_config.window.width, 
-             m_config.window.height, 
+  InitWindow(static_cast<int>(m_config.window.width), 
+             static_cast<int>(m_config.window.height), 
              "Geomentry Wars !!!");
   SetTargetFPS(static_cast<int>(m_config.window.FPSLimit));
 
@@ -439,7 +508,7 @@ Game::Game(const char* currentWorkingDirectory)
   }
 
   std::string fontFileAbsolutePath = m_currentWorkingDirectory + m_config.font.name;
-  m_font = LoadFontEx(fontFileAbsolutePath.c_str(), m_config.font.size, nullptr, 0);
+  m_font = LoadFontEx(fontFileAbsolutePath.c_str(), static_cast<int>(m_config.font.size), nullptr, 0);
   if (!IsFontValid(m_font))
   {
     std::cerr << "Failed to load font: " << fontFileAbsolutePath << std::endl;
@@ -455,37 +524,32 @@ Game::~Game()
   CloseWindow();
 }
 
-void Game::destroyPlayer() {}
-
-void Game::destroyEnemy() {}
-
 void Game::run()
 {
   while (!WindowShouldClose())
   {
-    /* INPUT */
+    /********************************************
+     * Пользовательский ввод
+     ********************************************/
 
     systemInput();
 
 
-    /* UPDATE STATE */
-
-    m_enemyTimer++;
-    if (m_enemyTimer >= m_config.enemy.spawnInterval)
-    {
-      m_enemyTimer = 0;
-      m_score++;
-      spawnEnemy();
-    }
+    /********************************************
+     * Обновление состояние игры 
+     ********************************************/
 
     systemPlayer();
+    systemEnemies();
     systemMovement();
     systemCollision();
 
     m_manager.update();
 
 
-    /* RENDERING */
+    /********************************************
+     * Отрисовка
+     ********************************************/
 
     BeginDrawing();
 
