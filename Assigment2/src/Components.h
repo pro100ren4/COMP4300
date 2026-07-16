@@ -69,6 +69,8 @@ public:
     bool right = false;
     bool shoot = false;
     Vec2 shootTarget;
+    bool specialWeapon = false;
+    Vec2 specialWeaponTarget;
 
     CInput()
       : shootTarget(0, 0)

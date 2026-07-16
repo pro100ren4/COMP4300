@@ -14,6 +14,7 @@ class Game
 
 	bool m_isRunning = false;
   size_t m_enemyTimer = 0;
+  size_t m_specialWeaponTimer = 0;
   int m_score = 0;
 
 	EntityManager m_manager;
@@ -23,6 +24,7 @@ class Game
 	void spawnPlayer();
 	void spawnEnemy();
 	void spawnBullet();
+	void spawnGranade();
 
   // Systems
 	void systemRender();
@@ -33,6 +35,7 @@ class Game
   void systemCollision();
   void systemBullets();
   void systemTimer();
+  void systemSpecialWeapon();
 
   // Kill functions
   void killPlayer();

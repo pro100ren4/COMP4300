@@ -108,39 +108,47 @@ void Game::spawnBullet() {
   bullet->timer = std::make_shared<CTimer>(m_config.bullet.bulletLifetime);
 }
 
-void Game::systemTimer()
+void Game::spawnGranade()
 {
-  EntitiesVector entities = m_manager.getEntities();
+  auto gravityGranade = m_manager.addEntity("GGranade");
 
-  for (auto &entity: entities)
-  {
-    if (!(entity->timer))
-      continue;
+  const int granadeLifetime = 60; // Граната существует 2 сек.
+  float granadeSpeed = 
+    m_player->transform->position
+        .distance(m_player->input->specialWeaponTarget)
+    / granadeLifetime;
 
-    if (entity->timer->currentCount == 0)
-      entity->destroy();
-    else 
-      entity->timer->currentCount--;
+  Vec2 granadePosition = m_player->transform->position;
+  Vec2 granadeVelocity = 
+    (m_player->input->specialWeaponTarget - m_player->transform->position)
+        .normilize()
+    * granadeSpeed;
 
-    if (!(entity->shape))
-      continue;
+  gravityGranade->transform = std::make_shared<CTransform>(
+      granadePosition,
+      granadeVelocity,
+      0.f);
 
-    float alphaNormilized = 
-      static_cast<float>(entity->timer->currentCount) / 
-      static_cast<float>(entity->timer->totalCount);
+  gravityGranade->shape = std::make_shared<CShape>(
+      0,
+      Color {0xFF, 0xFF, 0xFF, 0xFF},
+      Color {0x00, 0xFF, 0x00, 0xFF},
+      1.f,
+      10.f);
 
-    // NOTE: Каким-то образом текущее значение таймера оказалось больше, чем
-    // его значение при инициализации. Это может привести к переполнению
-    // значению альфа канала цвета, т.к. множитель альфа-канала не
-    // нормализуется корректно.
-    if (entity->timer->currentCount > entity->timer->totalCount)
-      std::cerr << "Timer value greater than it should be ("
-                << entity->timer->currentCount << "/"
-                << entity->timer->totalCount << ")" << std::endl;
+  gravityGranade->timer = std::make_shared<CTimer>(granadeLifetime);
 
-    entity->shape->fill.a = static_cast<uint8_t>(alphaNormilized * 255);
-
-  }
+  //
+  // TODO: При смерти гранаты она должна создавать сущность гравитационной
+  // ловушки, которая жила бы секунд 5-10 и притягивала к себе близких врагов.
+  // Близких врагов можно определять через distance, а притягивание реализовать
+  // либо через прибавление некоторого вектора притяжения к вектору скорости
+  // сущности, либо через замену вектора скорости на направелнный в сторону
+  // ценкта гравитационной ловушки.
+  //
+  // Можно реализовать сразу 2 варианта. Если врга далеко, то просто прибавляем
+  // , а если близко, то напрявляем прямо в центр.
+  // 
 }
 
 
@@ -316,8 +324,14 @@ void Game::systemInput()
         entity->input->right = true;
       if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         entity->input->shoot = true;
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+        entity->input->specialWeapon = true;
 
       entity->input->shootTarget = Vec2(
+        static_cast<float>(GetMouseX()),
+        static_cast<float>(GetMouseY())
+      );
+      entity->input->specialWeaponTarget = Vec2(
         static_cast<float>(GetMouseX()),
         static_cast<float>(GetMouseY())
       );
@@ -381,6 +395,65 @@ void Game::systemBullets()
   }
 }
 
+void Game::systemTimer()
+{
+  EntitiesVector entities = m_manager.getEntities();
+
+  for (auto &entity: entities)
+  {
+    if (!(entity->timer))
+      continue;
+
+    if (entity->timer->currentCount == 0)
+      //
+      // XXX: Не гибкое решение. Нету возможности вызывать свой код обработки
+      // смерти сущности.
+      //
+      entity->destroy();
+    else 
+      entity->timer->currentCount--;
+
+    if (!(entity->shape))
+      continue;
+
+    float alphaNormilized = 
+      static_cast<float>(entity->timer->currentCount) / 
+      static_cast<float>(entity->timer->totalCount);
+
+    // 
+    // XXX: Каким-то образом текущее значение таймера оказалось больше, чем
+    // его значение при инициализации. Это может привести к переполнению
+    // значению альфа канала цвета, т.к. множитель альфа-канала не
+    // нормализуется корректно.
+    //
+    if (entity->timer->currentCount > entity->timer->totalCount)
+      std::cerr << "Timer value greater than it should be ("
+                << entity->timer->currentCount << "/"
+                << entity->timer->totalCount << ")" << std::endl;
+
+    entity->shape->fill.a = static_cast<uint8_t>(alphaNormilized * 255);
+
+  }
+}
+
+void Game::systemSpecialWeapon()
+{
+  m_specialWeaponTimer++;
+  const int specialWeaponTimeout = 120;
+
+  if (m_player->input->specialWeapon)
+  {
+    if (m_specialWeaponTimer >= specialWeaponTimeout)
+    {
+      m_specialWeaponTimer = 0;
+      spawnGranade();
+    }
+    else
+    {
+      std::cout << "Granade timeout" << std::endl;
+    }
+  }
+}
 /******************************************************************************
  * KILL 
  *****************************************************************************/
@@ -626,6 +699,7 @@ void Game::clearInputs()
       entity->input->left = false;
       entity->input->right = false;
       entity->input->shoot = false;
+      entity->input->specialWeapon = false;
     }
   }
 }
@@ -655,6 +729,7 @@ Game::Game(const char* currentWorkingDirectory)
   : m_currentWorkingDirectory(currentWorkingDirectory)
 {
 
+  // CONFIG
   if (!readConfigFile(std::string("res\\config.txt")))
   {
     std::cerr << "Failed to create config" << std::endl;
@@ -714,6 +789,7 @@ void Game::run()
       systemMovement();
       systemCollision();
       systemTimer();
+      systemSpecialWeapon();
 
       m_manager.update();
     }
