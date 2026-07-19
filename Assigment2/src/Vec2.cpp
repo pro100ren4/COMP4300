@@ -57,3 +57,14 @@ Vec2 Vec2::normilize()
 
   return Vec2( x / mod, y / mod);
 }
+  
+Vec2 Vec2::scale(float factor)
+{
+  return Vec2(x * factor, y * factor);
+}
+  
+void Vec2::scaleMe(float factor)
+{
+  x *= factor;
+  y *= factor;
+}

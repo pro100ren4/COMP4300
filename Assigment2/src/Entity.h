@@ -25,5 +25,6 @@ public:
   std::shared_ptr<CTimer> timer;
 
   void destroy();
+  bool isTag(std::string tag);
 };
 

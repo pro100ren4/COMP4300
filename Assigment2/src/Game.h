@@ -25,6 +25,7 @@ class Game
 	void spawnEnemy();
 	void spawnBullet();
 	void spawnGranade();
+  void spawnGravityTrap();
 
   // Systems
 	void systemRender();
@@ -41,6 +42,8 @@ class Game
   void killPlayer();
   void killEnemy(std::shared_ptr<Entity> enemy);
   void killBullet(std::shared_ptr<Entity> bullet);
+  void killGranade(std::shared_ptr<Entity> granade);
+  void killEntity(std::shared_ptr<Entity> entity);
 
   // Utility functions
   bool readConfigFile(const std::string &pathToConfigFile);

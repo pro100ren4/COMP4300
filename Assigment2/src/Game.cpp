@@ -152,6 +152,35 @@ void Game::spawnGranade()
 }
 
 
+void Game::spawnGravityTrap()
+{
+  auto gravityTrap = m_manager.addEntity("GTrap");
+
+  Vec2 trapPosition = m_player->input->specialWeaponTarget;
+  Vec2 trapVelocity{0.f, 0.f};
+
+  Color trapFillColor {0xFF, 0xFF, 0xFF, 0xFF};
+  Color trapOutlineColor {0xFF, 0xFF, 0xFF, 0xFF};
+
+
+  gravityTrap->transform = std::make_shared<CTransform>(
+      trapPosition,
+      trapVelocity,
+      0.f);
+
+  gravityTrap->collision = std::make_shared<CCollision>(100.f);
+
+  gravityTrap->shape = std::make_shared<CShape>(
+      0,
+      trapOutlineColor,
+      trapFillColor,
+      1.f,
+      100.f);
+
+  gravityTrap->timer = std::make_shared<CTimer>(240);
+}
+
+
 /******************************************************************************
  * SYSTEMS
  *****************************************************************************/
@@ -409,7 +438,8 @@ void Game::systemTimer()
       // XXX: Не гибкое решение. Нету возможности вызывать свой код обработки
       // смерти сущности.
       //
-      entity->destroy();
+      killEntity(entity); 
+      // entity->destroy();
     else 
       entity->timer->currentCount--;
 
@@ -432,6 +462,7 @@ void Game::systemTimer()
                 << entity->timer->totalCount << ")" << std::endl;
 
     entity->shape->fill.a = static_cast<uint8_t>(alphaNormilized * 255);
+    entity->shape->outline.a = static_cast<uint8_t>(alphaNormilized * 255);
 
   }
 }
@@ -451,6 +482,25 @@ void Game::systemSpecialWeapon()
     else
     {
       std::cout << "Granade timeout" << std::endl;
+    }
+  }
+
+  EntitiesVector traps = m_manager.getEntities("GTrap");
+  EntitiesVector enemies = m_manager.getEntities("Enemy");
+
+
+  for (size_t idx = 0; idx < traps.size(); idx++)
+  {
+    for (size_t jdx = 0; jdx < enemies.size(); jdx++)
+    {
+      if (checkCollision(traps[idx], enemies[jdx]))
+      {
+          Vec2 trappedEnemyVelocity = 
+            traps[idx]->transform->position - enemies[jdx]->transform->position;
+          trappedEnemyVelocity.scaleMe(.03f);
+
+          enemies[jdx]->transform->velocity = trappedEnemyVelocity;
+      }
     }
   }
 }
@@ -473,7 +523,7 @@ void Game::killPlayer()
   else
   {
     std::cerr << "Player doesn't have \"Transform\" component."
-              << "That strange."
+              << "That\'s wierd."
               << std::endl;
   }
 }
@@ -482,6 +532,8 @@ void Game::killEnemy(std::shared_ptr<Entity> enemy)
 {
   if (!enemy)
     return;
+
+  std::cout << "Killing Enemy" << std::endl;
 
   float angleStep = DEG2RAD * 360.f / enemy->shape->numberVerticies;
 
@@ -510,14 +562,42 @@ void Game::killEnemy(std::shared_ptr<Entity> enemy)
 
 }
 
+
+void Game::killGranade(std::shared_ptr<Entity> granade)
+{
+  if (!granade)
+    return;
+
+  granade->destroy();
+
+  std::cout << "Killing Granade" << std::endl;
+
+  spawnGravityTrap();
+}
+
 void Game::killBullet(std::shared_ptr<Entity> bullet)
 {
   if (!bullet)
     return;
 
+  std::cout << "Killing Bullet" << std::endl;
+
   bullet->destroy();
 }
 
+void Game::killEntity(std::shared_ptr<Entity> entity)
+{
+  if (entity->isTag("Player"))
+    killPlayer();
+  else if (entity->isTag("Enemy"))
+    killEnemy(entity);
+  else if (entity->isTag("Bullet"))
+    killBullet(entity);
+  else if (entity->isTag("GGranade"))
+    killGranade(entity);
+  else
+    entity->destroy();
+}
 
 /******************************************************************************
  * UTILITY

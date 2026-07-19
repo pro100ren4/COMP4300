@@ -12,3 +12,8 @@ void Entity::destroy()
 {
 	m_alive = false;
 }
+  
+bool Entity::isTag(std::string tag)
+{
+  return (m_tag == tag);
+}

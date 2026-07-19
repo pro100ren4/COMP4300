@@ -19,5 +19,7 @@ public:
 
   float distance(const Vec2 &destination) const;
   Vec2 normilize();
+  Vec2 scale(float factor);
+  void scaleMe(float factor);
 };
 
