@@ -16,7 +16,6 @@ class Entity
 
   Entity() {}
   Entity(const size_t id, const std::string &tag);
-  ~Entity() { animation.clear() }
 
 public:
   std::shared_ptr<CTransform> transform;
@@ -28,5 +27,6 @@ public:
 
   void destroy();
   bool isTag(std::string tag);
+  ~Entity();
 };
 
