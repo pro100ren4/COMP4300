@@ -1,0 +1,41 @@
+Texture TexStand   images/player_stand_24x24p_1f.png
+Texture TexRun 	   images/player_run_24x24p_2f.png
+Texture TexAir 	   images/player_air_24x24p_1f.png
+Texture TexBuster  images/player_buster_24x24p_2f.png
+Texture TexExplode images/explosion_18x18p_12f.png
+Texture TexCoin    images/coin_spin_18x18p_2f.png
+Texture TexBrick   images/brick_18x18p_1f.png
+Texture TexQ 	   images/question_block_18x18p_2f.png
+Texture TexQ2 	   images/question_block2_18x18p_1f.png
+Texture TexPipeS   images/pipe_small_18x18p_1f.png
+Texture TexPipeT   images/pipe_big_18x18p_1f.png
+Texture TexCloudB  images/cloud_big_54x18p_1f.png
+Texture TexCloudS  images/cloud_small_18x18p_1f.png
+Texture TexBush    images/bush_small_18x18p_1f.png
+Texture TexBushBig images/bush_big_54x18p_1f.png
+Texture TexGround  images/ground_18x18p_1f.png
+Texture TexBlock   images/block_18x18p_1f.png
+Texture TexPole    images/flag_pole_18x18p_1f.png
+Texture TexFlag    images/flag_18x18p_1f.png
+Animation Stand TexStand 1 0
+Animation Run TexRun 4 10
+Animation Air TexAir 1 0
+Animation Buster TexBuster 1 0
+Animation Explosion TexExplode 12 2
+Animation Coin TexCoin 6 5
+Animation Question TexQ 2 10
+Animation Brick TexBrick 1 0
+Animation Question2 TexQ2 1 0
+Animation PipeTall TexPipeT 1 0
+Animation PipeSmall TexPipeS 1 0
+Animation CloudBig TexCloudB 1 0
+Animation CloudSmall TexCloudS 1 0
+Animation Bush TexBush 1 0
+Animation BushBig TexBushBig 1 0
+Animation Ground TexGround 1 0
+Animation Block TexBlock 1 0
+Animation Flag TexFlag 1 0
+Animation Pole TexPole 1 0
+Font Tech fonts/tech.ttf
+Font Mario fonts/mario.ttf
+Font Megamen fonts/megamen.ttf
