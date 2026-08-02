@@ -5,6 +5,7 @@
 class SceneMenu : public Scene
 {
   std::vector<std::string> m_menuEntries;
+  int selectedEntry = 0;
 
 public:
   SceneMenu();

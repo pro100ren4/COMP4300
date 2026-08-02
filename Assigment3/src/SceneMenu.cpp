@@ -1,29 +1,34 @@
 #include "SceneMenu.h"
 
+#include <raylib.h>
 
 #include "Common.h"
 
 SceneMenu::SceneMenu()
 { 
-  // TODO("SceneMenu::SceneMenu()");
+  m_menuEntries.push_back("1. Play");
+  m_menuEntries.push_back("2. Settings");
+  m_menuEntries.push_back("3. Exit");
 }
 
 SceneMenu::~SceneMenu()
 {
-  // TODO("SceneMenu::~SceneMenu()");
+  m_menuEntries.clear();
 }
 
 void SceneMenu::systemInput()
 {
-  TODO("void SceneMenu::systemInput()");
 }
 
 void SceneMenu::systemUpdate()
 {
-  TODO("void SceneMenu::systemUpdate() ");
 }
 
 void SceneMenu::systemRender()
 {
-  TODO("void SceneMenu::systemRender()");
+  BeginDrawing();
+
+  ClearBackground(RED);
+
+  EndDrawing();
 }

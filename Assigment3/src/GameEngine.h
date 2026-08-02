@@ -9,6 +9,7 @@
 #include <raylib.h>
 
 #include "Scene.h"
+#include "Config.h"
 #include "Common.h"
 
 class Scene;
@@ -18,6 +19,9 @@ class GameEngine
   bool m_running = false;
   std::map<std::string, std::shared_ptr<Scene>> m_scenes;
   std::string m_currentScene;
+  Config m_config; 
+  
+  void loadConfig(std::string configPath);
 
 public:
   // NOTE: Архитерктурно как будто лучше если у всех сцен будет единый счетчик
