@@ -2,10 +2,11 @@
 
 #include <vector>
 #include <memory>
-#include <map>
 #include <string>
+#include <map>
 
 #include "Entity.h"
+#include "Common.h"
 
 typedef std::vector<std::shared_ptr<Entity>> EntitiesVector;
 typedef std::map<std::string, EntitiesVector> EntitiesMap;

@@ -1,15 +1,17 @@
 #pragma once
 
-#include <map>
-#include <string>
-
-#include "Action.h"
+#include "EntityManager.h"
+#include "Common.h"
 
 class Scene
 {
-  std::string m_name;
-  std::map<std::string, std::shared_ptr<Action>> actions;
-    
+  EntityManager m_eneities;
 
 public:
-}
+  Scene();
+  ~Scene();
+
+  void systemInput();
+  void systemUpdate();
+  void systemRender();
+};

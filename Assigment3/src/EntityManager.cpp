@@ -1,10 +1,9 @@
-#include <vector>
+#include "EntityManager.h"
+
 #include <memory>
-#include <map>
-#include <string>
 
 #include "Entity.h"
-#include "EntityManager.h"
+#include "Common.h"
 
 EntityManager::~EntityManager()
 {
@@ -14,7 +13,8 @@ EntityManager::~EntityManager()
 
 std::shared_ptr<Entity> EntityManager::addEntity(const std::string& tag)
 {
-	std::shared_ptr<Entity> entity = std::shared_ptr<Entity>(new Entity(m_totalEntities++, tag));
+	std::shared_ptr<Entity> entity = 
+    std::make_shared<Entity>(m_totalEntities++, tag);
 	m_entitiesToAdd.push_back(entity);
 
 	return entity;

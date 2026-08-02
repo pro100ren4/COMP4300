@@ -1,27 +1,39 @@
 #pragma once
 
+#include <map>
+#include <string>
+#include <memory>
+#include <iostream>
+
 #include "Scene.h"
+#include "Common.h"
+
+class Scene;
 
 class GameEngine
 {
-  std::map<std::string, std::shared_ptr<Scene>> m_scenes;
-  AssetManager m_assetManager;
-
-  std::string m_currentScene;
   bool m_running = false;
+  std::map<std::string, std::shared_ptr<Scene>> m_scenes;
+  std::string m_currentScene;
+
 
 public:
+  // NOTE: Архитерктурно как будто лучше если у всех сцен будет единый счетчик
+  //       кадров, кот. храниться в движке. НО это может быть медленно(?), т.к.
+  //       сцене приходиться не просто брать свое локальное поле, а обращаться
+  //       к глобальному классу движка.
+  int64_t currentFrame = 0;
+
   GameEngine();
   ~GameEngine();
 
-  bool isRunning() { return m_running; }
-  std::string getCurrentScene() { return m_currentScene; }
-
-  void initialize();
-  void quit();
   void run();
 
-  Asset &getAsset(std::string name);
+  void setCurrentScene(std::string name);
 };
 
-GameEngine G;
+// NOTE: Возможно лучше было бы заменить глоабльную переменную на "одиночку"
+//       (паттерн), чтобы удостовериться, что каждый экземпляр Scene обращается
+//       к одному и тому же экземеляру класса движка, но это может быть медлен-
+//       но из-за косвенного обращения к классу.
+extern GameEngine G;

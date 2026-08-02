@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-#include <raylib.h>
+#include "Common.h"
 
 Entity::Entity(const size_t id, const std::string& tag)
 	: m_ID(id)
@@ -9,9 +9,7 @@ Entity::Entity(const size_t id, const std::string& tag)
 }
 
 Entity::~Entity()
-{
-  animation.clear();
-}
+{}
 
 void Entity::destroy()
 {

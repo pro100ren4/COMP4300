@@ -16,7 +16,7 @@ class Entity
 
   Entity() {}
   Entity(const size_t id, const std::string &tag);
-  ~Entity() { animation.clear() }
+  ~Entity();
 
 public:
   std::shared_ptr<CTransform> transform;

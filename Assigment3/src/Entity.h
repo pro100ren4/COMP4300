@@ -1,10 +1,10 @@
 #pragma once
 
-#include <string>
 #include <memory>
-#include <map>
+#include <string>
 
 #include "Components.h"
+#include "Common.h"
 
 class Entity
 {
@@ -14,19 +14,21 @@ class Entity
   size_t m_ID = 0;
   std::string m_tag = "default";
 
-  Entity() {}
-  Entity(const size_t id, const std::string &tag);
 
 public:
+  // HACK: Конструкторы и деструктор должны быть приватными, но компилятор 
+  //       решил повыебываться, поэтому, теперь они публичные. Но надо теперь
+  //       следить, что сущности создаются только с помощью менеджера сущностей
+  Entity() {}
+  Entity(const size_t id, const std::string &tag);
+  ~Entity();
+
   std::shared_ptr<CTransform> transform;
-  std::shared_ptr<CTexture> texture;
-  std::map<std::string, std::shared_ptr<CAnimation>> animations;
   std::shared_ptr<CBoundingBox> boundingBox;
   std::shared_ptr<CInput> input;
   std::shared_ptr<CTimer> timer;
 
   void destroy();
   bool isTag(std::string tag);
-  ~Entity();
 };
 

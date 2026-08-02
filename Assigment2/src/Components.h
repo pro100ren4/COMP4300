@@ -47,13 +47,14 @@ public:
       Texture2D animationTileset,
       int numberFrames,
       int transitionTimeInFrames,
-      Vector sizeOfFrame)
+      Vector2 sizeOfFrame)
     : name(name)
     , animationTileset(animationTileset)
     , numberFrames(numberFrames)
     , currentFrame(0)
     , transitionTimeInFrames(transitionTimeInFrames)
     , sizeOfFrame(sizeOfFrame)
+  {}
 };
 
 class CBoundingBox
@@ -61,7 +62,7 @@ class CBoundingBox
 public:
     Vector2 size; 
 
-    CBoundingBox(size)
+    CBoundingBox(Vector2 size)
         : size(size)
     {}
 };

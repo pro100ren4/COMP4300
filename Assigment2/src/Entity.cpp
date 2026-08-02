@@ -10,7 +10,6 @@ Entity::Entity(const size_t id, const std::string& tag)
 
 Entity::~Entity()
 {
-  animation.clear();
 }
 
 void Entity::destroy()
