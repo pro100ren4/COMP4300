@@ -8,12 +8,14 @@ add_executable(${PROJECT_NAME}
   src/Scene.h
   src/Entity.h
   src/EntityManager.h
+  src/SceneMenu.h
   src/Components.h
   src/main.cpp
   src/GameEngine.cpp
   src/Scene.cpp
   src/Entity.cpp
   src/EntityManager.cpp
+  src/SceneMenu.cpp
 )
 
 add_subdirectory(external/raylib-5.5)

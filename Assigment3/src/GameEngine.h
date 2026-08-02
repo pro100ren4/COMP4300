@@ -1,9 +1,12 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <string>
 #include <memory>
 #include <iostream>
+
+#include <raylib.h>
 
 #include "Scene.h"
 #include "Common.h"
@@ -15,7 +18,6 @@ class GameEngine
   bool m_running = false;
   std::map<std::string, std::shared_ptr<Scene>> m_scenes;
   std::string m_currentScene;
-
 
 public:
   // NOTE: Архитерктурно как будто лучше если у всех сцен будет единый счетчик
@@ -30,6 +32,7 @@ public:
   void run();
 
   void setCurrentScene(std::string name);
+  void registerAction(KeyboardKey key, const std::string &type);
 };
 
 // NOTE: Возможно лучше было бы заменить глоабльную переменную на "одиночку"

@@ -4,13 +4,14 @@
 
 #include <raylib.h>
 
+#include "SceneMenu.h"
 #include "Common.h"
 
 
 GameEngine::GameEngine()
 {
-  m_scenes["SceneMenu"] = std::make_shared<Scene>();
-  m_scenes["SceneLevel"] = std::make_shared<Scene>();
+  m_scenes["SceneMenu"] = std::make_shared<SceneMenu>();
+  m_scenes["SceneLevel"] = std::make_shared<SceneMenu>();
 
   setCurrentScene("SceneMenu");
 

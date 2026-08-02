@@ -5,7 +5,6 @@
 
 Scene::Scene()
 {
-  std::cout << "CurrentFrame is: " << G.currentFrame << std::endl;
 }
 
 Scene::~Scene()
@@ -14,15 +13,15 @@ Scene::~Scene()
 
 void Scene::systemInput()
 {
-  TODO("systemInput() not implemented");
+  UNREACHABLE("void Scene::systemInput()")
 }
 
 void Scene::systemUpdate()
 {
-  TODO("systemUpdate() not implemented");
+  UNREACHABLE("void Scene::systemUpdate()")
 }
 
 void Scene::systemRender()
 {
-  TODO("systemRender() not implemented");
+  UNREACHABLE("void Scene::systemRender()")
 }
