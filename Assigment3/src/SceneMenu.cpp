@@ -10,28 +10,33 @@ SceneMenu::SceneMenu()
   m_primaryFont = G.getFont("Beholden");
   m_primaryFontSize = 32.f;
 
-  m_primaryFontColor.r = 0xFF;
-  m_primaryFontColor.g = 0xFF;
-  m_primaryFontColor.b = 0xFF;
-  m_primaryFontColor.a = 0xFF;
+  textColors[PRIMARY].r = 0xFF;
+  textColors[PRIMARY].g = 0xFF;
+  textColors[PRIMARY].b = 0xFF;
+  textColors[PRIMARY].a = 0xFF;
 
-  m_primaryFontAccent.r = 251;
-  m_primaryFontAccent.g = 209;
-  m_primaryFontAccent.b = 51;
-  m_primaryFontAccent.a = 0xFF;
+  textColors[PRIMARY_ACCENT].r = 251;
+  textColors[PRIMARY_ACCENT].g = 209;
+  textColors[PRIMARY_ACCENT].b = 51;
+  textColors[PRIMARY_ACCENT].a = 0xFF;
 
-  m_backgroundColor.r = 139;
-  m_backgroundColor.g = 193;
-  m_backgroundColor.b = 232;
-  m_backgroundColor.a = 0xFF;
+  textColors[BACKGROUND].r = 139;
+  textColors[BACKGROUND].g = 193;
+  textColors[BACKGROUND].b = 232;
+  textColors[BACKGROUND].a = 0xFF;
 
 
-  m_primaryFontSelected.r = 0xFF;
-  m_primaryFontSelected.g = 0xAA;
-  m_primaryFontSelected.b = 0x64;
-  m_primaryFontSelected.a = 0xFF;
+  textColors[SELECTED].r = 0xFF;
+  textColors[SELECTED].g = 0xAA;
+  textColors[SELECTED].b = 0x64;
+  textColors[SELECTED].a = 0xFF;
 
   m_menuEntries.push_back("Play");
+  m_menuEntries.push_back("Exit");
+  m_menuEntries.push_back("Exit");
+  m_menuEntries.push_back("Exit");
+  m_menuEntries.push_back("Exit");
+  m_menuEntries.push_back("Exit");
   m_menuEntries.push_back("Exit");
 }
 
@@ -70,15 +75,14 @@ void SceneMenu::drawMenuEntry(int numEntry)
         accentPos,
         m_primaryFont.baseSize,
         1.f,
-        m_primaryFontAccent);
-
+        textColors[PRIMARY_ACCENT]);
     DrawTextEx(
         m_primaryFont,
         m_menuEntries[numEntry].c_str(),
         textPos,
         m_primaryFont.baseSize,
         1.f,
-        m_primaryFontSelected);
+        textColors[SELECTED]);
   } 
   else
   {  
@@ -88,7 +92,7 @@ void SceneMenu::drawMenuEntry(int numEntry)
         accentPos,
         m_primaryFont.baseSize,
         1.f,
-        m_primaryFontAccent);
+        textColors[PRIMARY_ACCENT]);
 
     DrawTextEx(
         m_primaryFont,
@@ -96,13 +100,27 @@ void SceneMenu::drawMenuEntry(int numEntry)
         textPos,
         m_primaryFont.baseSize,
         1.f,
-        m_primaryFontColor);
+        textColors[PRIMARY]);
   }
 
 }
 
 void SceneMenu::systemInput()
 {
+  if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN))
+  {
+    m_selectedEntry = (m_selectedEntry + 1);
+    
+    if (m_selectedEntry >= m_menuEntries.size())
+      m_selectedEntry = 0;
+  }
+  else if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))
+  {
+    m_selectedEntry = (m_selectedEntry - 1);
+    
+    if (m_selectedEntry < 0)
+      m_selectedEntry = m_menuEntries.size() - 1;
+  }
 }
 
 void SceneMenu::systemUpdate()
@@ -113,7 +131,7 @@ void SceneMenu::systemRender()
 {
   BeginDrawing();
 
-  ClearBackground(m_backgroundColor);
+  ClearBackground(textColors[BACKGROUND]);
 
   for (int i = 0; i < m_menuEntries.size(); i++)
   {

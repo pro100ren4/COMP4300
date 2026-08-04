@@ -4,14 +4,22 @@
 
 class SceneMenu : public Scene
 {
+  enum ColorType {
+    PRIMARY = 0,
+    PRIMARY_ACCENT,
+    SECONDARY,
+    SECONDARY_ACCENT, 
+    BACKGROUND,
+    SELECTED,
+    MAX
+  };
+
   std::vector<std::string> m_menuEntries;
   int m_selectedEntry = 0;
   Font m_primaryFont;
   float m_primaryFontSize;
-  Color m_primaryFontColor;
-  Color m_primaryFontAccent;
-  Color m_backgroundColor;
-  Color m_primaryFontSelected;
+
+  Color textColors[ColorType::MAX];
 
   void drawMenuEntry(int numEntry);
 
