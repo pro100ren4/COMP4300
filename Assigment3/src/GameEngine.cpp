@@ -6,6 +6,7 @@
 #include <raylib.h>
 
 #include "SceneMenu.h"
+#include "SceneLevel.h"
 #include "Config.h"
 #include "Common.h"
 
@@ -56,7 +57,7 @@ GameEngine::GameEngine()
   loadAssets();
 
   m_scenes["SceneMenu"] = std::make_shared<SceneMenu>();
-  m_scenes["SceneLevel"] = std::make_shared<SceneMenu>();
+  m_scenes["SceneLevel"] = std::make_shared<SceneLevel>();
 
   setCurrentScene("SceneMenu");
 

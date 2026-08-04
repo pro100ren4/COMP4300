@@ -121,6 +121,10 @@ void SceneMenu::systemInput()
     if (m_selectedEntry < 0)
       m_selectedEntry = m_menuEntries.size() - 1;
   }
+  else if (IsKeyPressed(KEY_ENTER))
+  {
+    G.setCurrentScene("SceneLevel");
+  }
 }
 
 void SceneMenu::systemUpdate()
