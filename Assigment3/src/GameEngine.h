@@ -20,8 +20,13 @@ class GameEngine
   std::map<std::string, std::shared_ptr<Scene>> m_scenes;
   std::string m_currentScene;
   Config m_config; 
+  std::string m_basePath;
+
+  std::map<std::string, Image> m_textures;
+  std::map<std::string, Font> m_fonts;
   
   void loadConfig(std::string configPath);
+  void loadAssets();
 
 public:
   // NOTE: Архитерктурно как будто лучше если у всех сцен будет единый счетчик
@@ -37,6 +42,10 @@ public:
 
   void setCurrentScene(std::string name);
   void registerAction(KeyboardKey key, const std::string &type);
+  std::shared_ptr<Scene> currentScene();
+
+  Image getTexture(std::string name);
+  Font getFont(std::string name);
 };
 
 // NOTE: Возможно лучше было бы заменить глоабльную переменную на "одиночку"

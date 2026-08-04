@@ -14,6 +14,7 @@ struct AnimationConfig
 struct FontConfig
 {
   std::string fontPath; 
+  int fontSize;
 };
 
 struct Config
