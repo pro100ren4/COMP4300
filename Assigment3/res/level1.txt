@@ -1,3 +1,9 @@
-Tile Ground 0 0
+Tile Ground 0 32
+Tile Ground 1 32
+Tile Ground 2 32
+Tile Ground 3 32
+Tile Ground 4 32
+Tile Ground 5 32
+Tile Ground 6 32
 Dec Bush 0 1
 Player 0 2 18 18 5 -20 20 0.75 Buster

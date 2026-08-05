@@ -19,16 +19,18 @@ class GameEngine
   bool m_running = false;
   std::map<std::string, std::shared_ptr<Scene>> m_scenes;
   std::string m_currentScene;
-  Config m_config; 
   std::string m_basePath;
 
-  std::map<std::string, Image> m_textures;
+  std::map<std::string, Texture2D> m_textures;
   std::map<std::string, Font> m_fonts;
   
   void loadConfig(std::string configPath);
+  void loadAssetConfig(std::string assetConfigPath);
+  void loadLevelConfig(std::string name, std::string levelConfigPath);
   void loadAssets();
 
 public:
+  Config m_config; 
   // NOTE: Архитерктурно как будто лучше если у всех сцен будет единый счетчик
   //       кадров, кот. храниться в движке. НО это может быть медленно(?), т.к.
   //       сцене приходиться не просто брать свое локальное поле, а обращаться
@@ -41,11 +43,13 @@ public:
   void run();
 
   void setCurrentScene(std::string name);
-  void registerAction(KeyboardKey key, const std::string &type);
   std::shared_ptr<Scene> currentScene();
 
-  Image getTexture(std::string name);
+  // Image getTexture(std::string name);
+  Texture2D getTexture(std::string name);
   Font getFont(std::string name);
+
+  void exit();
 };
 
 // NOTE: Возможно лучше было бы заменить глоабльную переменную на "одиночку"

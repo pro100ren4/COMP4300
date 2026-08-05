@@ -18,24 +18,9 @@ public:
     {}
 };
 
-class CTexture
-{
-public:
-  Texture2D texture;
-  Rectangle rectangle;
-  Color tint;
-
-  CTexture(Texture2D texture, Rectangle rectangle, Color tint)
-    : texture(texture)
-    , rectangle(rectangle)
-    , tint(tint)
-  {}
-};
-
 class CAnimation
 {
 public:
-  std::string name;
   Texture2D animationTileset;
   int numberFrames;
   int currentFrame;
@@ -43,13 +28,11 @@ public:
   Vector2 sizeOfFrame;
 
   CAnimation(
-      std::string name,
       Texture2D animationTileset,
       int numberFrames,
       int transitionTimeInFrames,
       Vector2 sizeOfFrame)
-    : name(name)
-    , animationTileset(animationTileset)
+    : animationTileset(animationTileset)
     , numberFrames(numberFrames)
     , currentFrame(0)
     , transitionTimeInFrames(transitionTimeInFrames)

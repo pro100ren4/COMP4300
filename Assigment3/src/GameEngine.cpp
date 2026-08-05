@@ -10,10 +10,52 @@
 #include "Config.h"
 #include "Common.h"
 
+GameEngine G;
 
 void GameEngine::loadConfig(std::string configPath)
 {
   std::ifstream configFile(configPath); 
+  if (!configFile.is_open()) {
+    WARN("Failed to open file: %s", configPath.c_str());
+    return;
+  }
+
+  std::string classifier;
+  while (configFile >> classifier)
+  {
+    if (classifier == "Window")
+    {
+      configFile >> m_config.window.size.x;
+      configFile >> m_config.window.size.y;
+      configFile >> m_config.window.targetFps;
+    }
+    else if (classifier == "Assets")
+    { 
+      std::string assetsPath;
+      configFile >> assetsPath;
+      loadAssetConfig(m_basePath + assetsPath);
+    }
+    else if (classifier == "Level")
+    {
+      std::string levelName;
+      std::string levelPath;
+
+      configFile >> levelName;
+      configFile >> levelPath;
+
+      loadLevelConfig(levelName, m_basePath + levelPath);
+    }
+  }
+}
+
+void GameEngine::loadAssetConfig(std::string assetConfigPath)
+{  
+  std::ifstream configFile(assetConfigPath);
+  if (!configFile.is_open()) {
+    WARN("Failed to open file: %s", assetConfigPath.c_str());
+    return;
+  }
+
 
   std::string classifier;
   while (configFile >> classifier)
@@ -42,24 +84,80 @@ void GameEngine::loadConfig(std::string configPath)
   }
 }
 
+void GameEngine::loadLevelConfig(std::string name, std::string levelConfigPath)
+{  
+  std::ifstream configFile(levelConfigPath); 
+  if (!configFile.is_open()) {
+    WARN("Failed to open file: %s", levelConfigPath.c_str());
+    return;
+  }
+
+  std::shared_ptr<LevelConfig> lconfig = std::make_shared<LevelConfig>();
+  lconfig->levelPath = levelConfigPath;
+
+  std::string classifier;
+  while (configFile >> classifier)
+  {
+    if (classifier == "Tile")
+    {
+      TileConfig tconfig;
+      configFile >> tconfig.name;
+      configFile >> tconfig.position.x;
+      configFile >> tconfig.position.y;
+
+      lconfig->tiles.push_back(tconfig);
+    }
+    else if (classifier == "Dec")
+    { 
+      DecConfig dconfig;
+      configFile >> dconfig.name;
+      configFile >> dconfig.position.x;
+      configFile >> dconfig.position.y;
+
+      lconfig->decorations.push_back(dconfig);
+    }
+    else if (classifier == "Player")
+    {
+      configFile >> lconfig->player.position.x;
+      configFile >> lconfig->player.position.y;
+      configFile >> lconfig->player.aabbSize.x;
+      configFile >> lconfig->player.aabbSize.y;
+      configFile >> lconfig->player.moveSpeed;
+      configFile >> lconfig->player.jumpSpeed;
+      configFile >> lconfig->player.gravity;
+      configFile >> lconfig->player.bulletAnimationName;
+    }
+  }
+
+  m_config.level[name] = lconfig;
+}
+
 GameEngine::GameEngine()
 {
-#ifndef NDEBUG
+  m_basePath = GetApplicationDirectory();
+#ifdef NDEBUG
   SetTraceLogLevel(LOG_WARNING);
 #endif
 
-  InitWindow(1280, 720, "Super MEGA MARIO");
-  SetExitKey(KEY_NULL); // Отключить выход по нажатию ESC 
-  
-  m_basePath = GetApplicationDirectory();
+  loadConfig(m_basePath + "res/config.txt");
 
-  loadConfig(m_basePath + "res/assets.txt");
+  InitWindow(
+      m_config.window.size.x,
+      m_config.window.size.y,
+      "Super MEGA MARIO");
+  SetExitKey(KEY_NULL); // Отключить выход по нажатию ESC 
+  SetTargetFPS(m_config.window.targetFps);
+  
   loadAssets();
 
-  m_scenes["SceneMenu"] = std::make_shared<SceneMenu>();
-  m_scenes["SceneLevel"] = std::make_shared<SceneLevel>();
 
-  setCurrentScene("SceneMenu");
+  m_scenes["Menu"] = std::make_shared<SceneMenu>();
+  for (const auto &it: m_config.level)
+  { 
+    m_scenes[it.first] = std::make_shared<SceneLevel>(it.second);
+  }
+
+  setCurrentScene("Menu");
 
 
   m_running = true;
@@ -102,7 +200,7 @@ void GameEngine::loadAssets()
   for (const auto &it: m_config.animation)
   {
     std::string texturePath = m_basePath + it.second.texturePath;
-    Image texture = LoadImage(texturePath.c_str());
+    Texture2D texture = LoadTextureFromImage(LoadImage(texturePath.c_str()));
     m_textures[it.first] = texture;
   }
 
@@ -116,7 +214,7 @@ void GameEngine::loadAssets()
   }
 }
 
-Image GameEngine::getTexture(std::string name)
+Texture2D GameEngine::getTexture(std::string name)
 {
   return m_textures[name];
 }
@@ -124,4 +222,9 @@ Image GameEngine::getTexture(std::string name)
 Font GameEngine::getFont(std::string name)
 {
   return m_fonts[name];
+}
+
+void GameEngine::exit()
+{
+  m_running = false;
 }

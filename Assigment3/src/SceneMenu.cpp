@@ -5,39 +5,23 @@
 #include "GameEngine.h"
 #include "Common.h"
 
+#define EXIT "Exit"
+
 SceneMenu::SceneMenu()
 { 
   m_primaryFont = G.getFont("Beholden");
   m_primaryFontSize = 32.f;
 
-  textColors[PRIMARY].r = 0xFF;
-  textColors[PRIMARY].g = 0xFF;
-  textColors[PRIMARY].b = 0xFF;
-  textColors[PRIMARY].a = 0xFF;
+  textColors[PRIMARY]        = GetColor(0xFFFFFFFF);
+  textColors[PRIMARY_ACCENT] = GetColor(0xFBD133FF);
+  textColors[BACKGROUND]     = GetColor(0x8BC1E8FF);
+  textColors[SELECTED]       = GetColor(0xFFAA64FF);
 
-  textColors[PRIMARY_ACCENT].r = 251;
-  textColors[PRIMARY_ACCENT].g = 209;
-  textColors[PRIMARY_ACCENT].b = 51;
-  textColors[PRIMARY_ACCENT].a = 0xFF;
+  for (const auto &it: G.m_config.level)
+    m_menuEntries.push_back(it.first);
 
-  textColors[BACKGROUND].r = 139;
-  textColors[BACKGROUND].g = 193;
-  textColors[BACKGROUND].b = 232;
-  textColors[BACKGROUND].a = 0xFF;
-
-
-  textColors[SELECTED].r = 0xFF;
-  textColors[SELECTED].g = 0xAA;
-  textColors[SELECTED].b = 0x64;
-  textColors[SELECTED].a = 0xFF;
-
-  m_menuEntries.push_back("Play");
-  m_menuEntries.push_back("Exit");
-  m_menuEntries.push_back("Exit");
-  m_menuEntries.push_back("Exit");
-  m_menuEntries.push_back("Exit");
-  m_menuEntries.push_back("Exit");
-  m_menuEntries.push_back("Exit");
+  m_menuEntries.push_back("Settings");
+  m_menuEntries.push_back(EXIT);
 }
 
 SceneMenu::~SceneMenu()
@@ -123,13 +107,20 @@ void SceneMenu::systemInput()
   }
   else if (IsKeyPressed(KEY_ENTER))
   {
-    G.setCurrentScene("SceneLevel");
+    
+    for (const auto &it: G.m_config.level)
+    {
+      if (it.first == m_menuEntries[m_selectedEntry])
+        G.setCurrentScene(it.first);
+    }
+
+    if (m_menuEntries[m_selectedEntry] == EXIT)
+      G.exit();
   }
 }
 
 void SceneMenu::systemUpdate()
-{
-}
+{}
 
 void SceneMenu::systemRender()
 {

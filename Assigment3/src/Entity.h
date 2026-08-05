@@ -24,7 +24,8 @@ public:
   ~Entity();
 
   std::shared_ptr<CTransform> transform;
-  std::shared_ptr<CBoundingBox> boundingBox;
+  std::shared_ptr<CAnimation> animation;
+  std::shared_ptr<CBoundingBox> aabb;
   std::shared_ptr<CInput> input;
   std::shared_ptr<CTimer> timer;
 
