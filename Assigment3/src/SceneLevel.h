@@ -23,7 +23,7 @@ class SceneLevel : public Scene
 
   void drawTiles();
   void drawGrid();
-  void dradAABB();
+  void drawAABB();
 
 public:
   SceneLevel(std::shared_ptr<LevelConfig> levelConfig);

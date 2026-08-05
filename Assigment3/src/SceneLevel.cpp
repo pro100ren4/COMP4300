@@ -127,16 +127,22 @@ void SceneLevel::drawGrid()
       WHITE);
 }
 
-void SceneLevel::dradAABB()
+void SceneLevel::drawAABB()
 {
   auto entities = m_entities.getEntities();
 
-  for (const auto &e: entitites)
+  for (const auto &e: entities)
   {
-    if (!e->boundingBox || !e->transform)
+    if (!e->aabb || !e->transform)
       continue;
 
-    DrawRecta
+    Rectangle rec;
+    rec.x      = e->transform->position.x * m_tileWidth;
+    rec.y      = e->transform->position.y * m_tileHeight;
+    rec.width  = e->aabb->size.x;
+    rec.height = e->aabb->size.y;
+
+    DrawRectangleLinesEx(rec, 1.2f, GetColor(0xFF00FFFF));
   }
 }
 
@@ -163,6 +169,9 @@ void SceneLevel::systemInput()
 
   if (IsKeyPressed(KEY_H))
     m_displaySprites = !m_displaySprites;
+
+  if (IsKeyPressed(KEY_ESCAPE))
+    G.setCurrentScene("Menu");
 }
 
 void SceneLevel::systemUpdate()
@@ -184,6 +193,8 @@ void SceneLevel::systemRender()
     drawTiles();
   if (m_displayGrid)
     drawGrid();
+  if (m_displayAABB)
+    drawAABB();
 
   EndDrawing();
 }
