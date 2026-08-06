@@ -31,6 +31,7 @@ class SceneLevel : public Scene
   void DEBUG_drawInfo();
 
   Vector2 getOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
+  Vector2 getPrevOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
 
   void systemAnimation();
   void systemPhysics();

@@ -298,6 +298,27 @@ Vector2 SceneLevel::getOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entit
   return result;
 }
 
+Vector2 SceneLevel::getPrevOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2)
+{
+  Vector2 result {};
+
+  if ((!e1->transform) || (!e1->aabb) ||
+      (!e2->transform) || (!e1->aabb))
+  {
+    return result;
+  }
+
+  float dx = fabs((e2->transform->prevPosition.x + e2->aabb->size.x / 2) -
+                  (e1->transform->prevPosition.x + e1->aabb->size.x / 2));
+  float dy = fabs((e2->transform->prevPosition.y + e2->aabb->size.y / 2) -
+                  (e1->transform->prevPosition.y + e1->aabb->size.y / 2));
+
+  result.x = (e2->aabb->size.x + e1->aabb->size.x) / 2 - dx;
+  result.y = (e2->aabb->size.y + e1->aabb->size.y) / 2 - dy;
+  
+  return result;
+}
+
 void SceneLevel::systemPhysics()
 {
   auto entities = m_entities.getEntities("Tile");
@@ -320,8 +341,14 @@ void SceneLevel::systemPhysics()
       //       основываясь на этом. Если было горизонтальное перекрытие, то
       //       движение было вертикальным.
       
-      TODO("Collision");
+      Vector2 prevOverlap = getPrevOverlap(m_player, e);
       
+      if (prevOverlap.x > 0)
+        m_player->transform->position.y -= overlap.y;
+
+      if (prevOverlap.y > 0)
+        m_player->transform->position.x -= overlap.x;
+
     }
   }
 }
@@ -344,6 +371,7 @@ void SceneLevel::systemMovement()
 
   for (const auto &e: entities)
   {
+    e->transform->prevPosition = e->transform->position;
     e->transform->position = Vector2Add(e->transform->position, 
         Vector2Normalize(e->transform->velocity));
   }
