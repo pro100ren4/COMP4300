@@ -26,6 +26,7 @@ public:
   int currentFrame;
   int transitionTimeInFrames;
   Vector2 sizeOfFrame;
+  bool isPlaying = false;
 
   CAnimation(
       Texture2D animationTileset,

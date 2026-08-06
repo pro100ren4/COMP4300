@@ -9,19 +9,18 @@
 #include "GameEngine.h"
 
 // TODO:
-// * Отрисовки сетку тайлов
-// * Обработку ввода пользователя
 // * Обработку столкновений
 // * Отрисовку коллизий
 
 void SceneLevel::createTile(const TileConfig &c)
 {
+  auto tile = m_entities.addEntity("Tile");
+
   /* TRANSFORM */
   Vector2 tilePosition = c.position;
   Vector2 tileVelocity {}; // У тайла нулевая скорость
   float tileAngle = 0.f;
 
-  auto tile = m_entities.addEntity("Tile");
   tile->transform = std::make_shared<CTransform>(
       tilePosition,
       tileVelocity,
@@ -33,8 +32,8 @@ void SceneLevel::createTile(const TileConfig &c)
   int tileTransitionTimeInFrames = 
     G.m_config.animation[c.name].frameTransitionDuration;
   Vector2 tileSize {};
-  tileSize.y = tileAnimTileset.height;
-  tileSize.x = tileAnimTileset.height / tileNumberFrames;
+  tileSize.y = static_cast<float>(tileAnimTileset.height);
+  tileSize.x = static_cast<float>(tileAnimTileset.width / tileNumberFrames);
 
   tile->animation = std::make_shared<CAnimation>(
       tileAnimTileset,
@@ -46,8 +45,67 @@ void SceneLevel::createTile(const TileConfig &c)
   tile->aabb = std::make_shared<CBoundingBox>(tileSize);
 }
 
-void SceneLevel::drawTiles()
+void SceneLevel::createDecoration(const DecConfig &c)
 {
+  auto decoration = m_entities.addEntity("Decoration");
+
+  /* TRANSFORM */
+  Vector2 decorationPosition = c.position;
+  Vector2 decorationVelocity {}; // У тайла нулевая скорость
+  float decorationAngle = 0.f;
+
+  decoration->transform = std::make_shared<CTransform>(
+      decorationPosition,
+      decorationVelocity,
+      decorationAngle);
+
+  /* ANIMATION */
+  Texture2D decorationAnimTileset = G.getTexture(c.name);
+  int decorationNumberFrames = G.m_config.animation[c.name].frameCount;
+  int decorationTransitionTimeInFrames = 
+    G.m_config.animation[c.name].frameTransitionDuration;
+  Vector2 decorationSize {};
+  decorationSize.y = static_cast<float>(decorationAnimTileset.height);
+  decorationSize.x = static_cast<float>(decorationAnimTileset.width / decorationNumberFrames);
+
+  decoration->animation = std::make_shared<CAnimation>(
+      decorationAnimTileset,
+      decorationNumberFrames,
+      decorationTransitionTimeInFrames,
+      decorationSize);
+}
+
+void SceneLevel::createPlayer(const PlayerConfig &c)
+{
+  m_player = m_entities.addEntity("Player");
+
+  /* TRANSFORM */
+  Vector2 playerPos = c.position;
+  Vector2 playerVel {};
+  float   playerAngle = 0.f;
+
+  m_player->transform = std::make_shared<CTransform>(
+      playerPos, playerVel, playerAngle);
+
+  /* ANIMATION */
+  Texture2D playerTileset = G.getTexture("Stand");
+  int playerTilesetNumFrames 
+    = G.m_config.animation["Stand"].frameCount;
+  int playerTransitionTime 
+    = G.m_config.animation["Stand"].frameTransitionDuration;
+  Vector2 playerFrameSize;
+  playerFrameSize.y = static_cast<float>(playerTileset.height);
+  playerFrameSize.x = static_cast<float>(playerTileset.width / playerTilesetNumFrames);
+
+  m_player->animation = std::make_shared<CAnimation>(
+      playerTileset,
+      playerTilesetNumFrames,
+      playerTransitionTime,
+      playerFrameSize);
+}
+
+void SceneLevel::drawEntities()
+{  
   auto entities = m_entities.getEntities(); 
   for (const auto &e: entities)
   {
@@ -63,35 +121,48 @@ void SceneLevel::drawTiles()
     tileRect.width = e->animation->sizeOfFrame.x;
     tileRect.height = e->animation->sizeOfFrame.y;
     Vector2 tilePos = 
-      Vector2Multiply(e->transform->position, e->animation->sizeOfFrame);
+      Vector2Scale(e->transform->position, static_cast<float>(m_tileWidth));
 
     DrawTextureRec(tileTexture, tileRect, tilePos, WHITE);
   }
 }
 
-void SceneLevel::drawGrid()
+void SceneLevel::DEBUG_drawGrid()
 {
   for (int y = 0; y < G.m_config.window.size.y; y += m_tileHeight)
   {
-    DrawLine(0, y, G.m_config.window.size.x, y, WHITE);
+    DrawLine(0, y, static_cast<int>(G.m_config.window.size.x), y, WHITE);
     std::string cellCoord = std::to_string(y / m_tileHeight);
     DrawText(cellCoord.c_str(), 2, y + 2, 10, WHITE);
   }
 
   for (int x = 0; x < G.m_config.window.size.x; x += m_tileWidth)
   {
-    DrawLine(x, 0, x, G.m_config.window.size.y, WHITE);
+    DrawLine(x, 0, x, static_cast<int>(G.m_config.window.size.y), WHITE);
     std::string cellCoord = std::to_string(x / m_tileWidth);
     DrawText(cellCoord.c_str(), x + 2, 2, 10, WHITE);
   }
 
   Vector2 mousePos = GetMousePosition(); 
 
-  DrawLine(0, mousePos.y+1, mousePos.x, mousePos.y+1, BLACK);
-  DrawLine(0, mousePos.y, mousePos.x, mousePos.y, RED);
+  DrawLine(
+      0                           , static_cast<int>(mousePos.y+1),
+      static_cast<int>(mousePos.x), static_cast<int>(mousePos.y+1),
+      BLACK);
+  DrawLine(
+      0                           , static_cast<int>(mousePos.y),
+      static_cast<int>(mousePos.x), static_cast<int>(mousePos.y),
+      RED);
 
-  DrawLine(mousePos.x+1, 0, mousePos.x+1, mousePos.y, BLACK);
-  DrawLine(mousePos.x, 0, mousePos.x, mousePos.y, RED);
+  DrawLine(
+      static_cast<int>(mousePos.x+1), 0,
+      static_cast<int>(mousePos.x+1), static_cast<int>(mousePos.y),
+      BLACK);
+
+  DrawLine(
+      static_cast<int>(mousePos.x), 0,
+      static_cast<int>(mousePos.x), static_cast<int>(mousePos.y),
+      RED);
 
   std::string cellMouseCoord = 
     std::to_string(static_cast<int>(mousePos.x / m_tileWidth)) 
@@ -127,7 +198,7 @@ void SceneLevel::drawGrid()
       WHITE);
 }
 
-void SceneLevel::drawAABB()
+void SceneLevel::DEBUG_drawAABB()
 {
   auto entities = m_entities.getEntities();
 
@@ -146,13 +217,56 @@ void SceneLevel::drawAABB()
   }
 }
 
+void SceneLevel::systemAnimation()
+{
+  auto entities = m_entities.getEntities();
+
+  for (const auto &e: entities)
+  {
+    if ((!e->animation) ||
+        (!e->animation->isPlaying))
+      continue;
+       
+
+    // NOTE: Если "длительность" анимации 0, но она помечена как запущенная, то
+    //       отключаем ее. Для каждого тайла, у которого нету анимации, это
+    //       условие должно выполнятся только один раз. Только если не запусть
+    //       анимацию для тайлов снова.
+    if (e->animation->isPlaying && e->animation->transitionTimeInFrames == 0)
+    {
+      e->animation->isPlaying = false;
+    }
+
+
+    if (G.currentFrame % e->animation->transitionTimeInFrames == 0)
+    {
+      e->animation->currentFrame 
+        = (e->animation->currentFrame + 1) % e->animation->numberFrames;
+    }
+
+  }
+}
+
 SceneLevel::SceneLevel(std::shared_ptr<LevelConfig> levelConfig)
   : m_levelConfig(levelConfig)
 {
+
+#ifndef NDEBUG
+  m_displayGrid = true;
+  m_displayAABB = true;
+#endif
+
   for (const auto &it: m_levelConfig->tiles)
   {
     createTile(it);
   }
+
+  for (const auto &it: m_levelConfig->decorations)
+  {
+    createDecoration(it);
+  }
+
+  createPlayer(levelConfig->player);
 }
 
 SceneLevel::~SceneLevel()
@@ -172,10 +286,23 @@ void SceneLevel::systemInput()
 
   if (IsKeyPressed(KEY_ESCAPE))
     G.setCurrentScene("Menu");
+
+  // if (IsKeyPressed(KEY_P))
+  // {
+  //   auto entities = m_entities.getEntities();
+  //
+  //   for (const auto &e: entities)
+  //   {
+  //     if (e->animation)
+  //       e->animation->isPlaying = !e->animation->isPlaying;
+  //   }   
+  // }
 }
 
 void SceneLevel::systemUpdate()
 {
+  systemAnimation();
+
   m_entities.update();
 }
 
@@ -190,11 +317,16 @@ void SceneLevel::systemRender()
   ClearBackground(BLUE);
 
   if (m_displaySprites)
-    drawTiles();
+  {
+    // drawTiles();
+    // drawDecorations();
+    drawEntities();
+  }
+    
   if (m_displayGrid)
-    drawGrid();
+    DEBUG_drawGrid();
   if (m_displayAABB)
-    drawAABB();
+    DEBUG_drawAABB();
 
   EndDrawing();
 }

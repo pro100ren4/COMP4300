@@ -10,20 +10,26 @@ class SceneLevel : public Scene
 {
   EntityManager m_entities;
   std::shared_ptr<LevelConfig> m_levelConfig;
+  std::shared_ptr<Entity> m_player;
 
   bool m_displaySprites = true;
   bool m_displayGrid = false;
   bool m_displayAABB = false;
 
-
   const int m_tileWidth = 18;
   const int m_tileHeight = 18;
 
-  void createTile(const TileConfig &c);
+  float m_gravity = 0.f;
 
-  void drawTiles();
-  void drawGrid();
-  void drawAABB();
+  void createTile(const TileConfig &c);
+  void createDecoration(const DecConfig &c);
+  void createPlayer(const PlayerConfig &c);
+
+  void drawEntities();
+  void DEBUG_drawGrid();
+  void DEBUG_drawAABB();
+
+  void systemAnimation();
 
 public:
   SceneLevel(std::shared_ptr<LevelConfig> levelConfig);
