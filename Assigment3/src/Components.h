@@ -7,12 +7,14 @@
 class CTransform
 {
 public:
-    Vector2 position;
+    Vector2 prevPosition;
+    Vector2 position; // NOTE: Должен быть в пикселях экрана. Так сильно прище
     Vector2 velocity;
     float angle;
   
     CTransform(const Vector2 &position, const Vector2 &velocity, float angle)
-        : position(position)
+        : prevPosition(position)
+        , position(position)
         , velocity(velocity)
         , angle(angle)
     {}
@@ -60,7 +62,7 @@ public:
     bool right = false;
     bool shoot = false; 
 
-    CInput();
+    CInput() {};
 };
 
 class CTimer

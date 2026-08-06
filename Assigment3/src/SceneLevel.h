@@ -28,8 +28,13 @@ class SceneLevel : public Scene
   void drawEntities();
   void DEBUG_drawGrid();
   void DEBUG_drawAABB();
+  void DEBUG_drawInfo();
+
+  Vector2 getOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2);
 
   void systemAnimation();
+  void systemPhysics();
+  void systemMovement();
 
 public:
   SceneLevel(std::shared_ptr<LevelConfig> levelConfig);

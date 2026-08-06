@@ -1,23 +1,26 @@
 #include "SceneLevel.h"
 
 #include <string>
+#include <cmath>
 
 #include <raylib.h>
 #define RAYMATH_IMPLEMENTATION
 #include <raymath.h>
 
+#include "Components.h"
 #include "GameEngine.h"
 
 // TODO:
 // * Обработку столкновений
-// * Отрисовку коллизий
+// * Движение игрока
 
 void SceneLevel::createTile(const TileConfig &c)
 {
   auto tile = m_entities.addEntity("Tile");
 
   /* TRANSFORM */
-  Vector2 tilePosition = c.position;
+  Vector2 tilePosition 
+    = Vector2Scale(c.position, static_cast<float>(m_tileWidth));
   Vector2 tileVelocity {}; // У тайла нулевая скорость
   float tileAngle = 0.f;
 
@@ -50,7 +53,9 @@ void SceneLevel::createDecoration(const DecConfig &c)
   auto decoration = m_entities.addEntity("Decoration");
 
   /* TRANSFORM */
-  Vector2 decorationPosition = c.position;
+  // Vector2 decorationPosition = c.position;
+  Vector2 decorationPosition 
+    = Vector2Scale(c.position, static_cast<float>(m_tileWidth));
   Vector2 decorationVelocity {}; // У тайла нулевая скорость
   float decorationAngle = 0.f;
 
@@ -80,7 +85,9 @@ void SceneLevel::createPlayer(const PlayerConfig &c)
   m_player = m_entities.addEntity("Player");
 
   /* TRANSFORM */
-  Vector2 playerPos = c.position;
+  // Vector2 playerPos = c.position;
+  Vector2 playerPos 
+    = Vector2Scale(c.position, static_cast<float>(m_tileWidth));
   Vector2 playerVel {};
   float   playerAngle = 0.f;
 
@@ -102,6 +109,11 @@ void SceneLevel::createPlayer(const PlayerConfig &c)
       playerTilesetNumFrames,
       playerTransitionTime,
       playerFrameSize);
+
+  /* BOUNDING BOX */
+  m_player->aabb = std::make_shared<CBoundingBox>(playerFrameSize);
+
+  m_player->input = std::make_shared<CInput>();
 }
 
 void SceneLevel::drawEntities()
@@ -112,7 +124,6 @@ void SceneLevel::drawEntities()
     if (!e->transform || !e->animation)
       continue;
     
-    // DrawRectangleV( e->transform->position, e->animation->sizeOfFrame, RED);
     Texture2D tileTexture = e->animation->animationTileset;
       
     Rectangle tileRect {};
@@ -120,8 +131,8 @@ void SceneLevel::drawEntities()
     tileRect.y = 0;
     tileRect.width = e->animation->sizeOfFrame.x;
     tileRect.height = e->animation->sizeOfFrame.y;
-    Vector2 tilePos = 
-      Vector2Scale(e->transform->position, static_cast<float>(m_tileWidth));
+    Vector2 tilePos = e->transform->position;
+      // Vector2Scale(e->transform->position, static_cast<float>(m_tileWidth));
 
     DrawTextureRec(tileTexture, tileRect, tilePos, WHITE);
   }
@@ -208,13 +219,32 @@ void SceneLevel::DEBUG_drawAABB()
       continue;
 
     Rectangle rec;
-    rec.x      = e->transform->position.x * m_tileWidth;
-    rec.y      = e->transform->position.y * m_tileHeight;
+    rec.x      = e->transform->position.x; //* m_tileWidth;
+    rec.y      = e->transform->position.y; //* m_tileHeight;
     rec.width  = e->aabb->size.x;
     rec.height = e->aabb->size.y;
 
     DrawRectangleLinesEx(rec, 1.2f, GetColor(0xFF00FFFF));
   }
+}
+
+void SceneLevel::DEBUG_drawInfo()
+{
+  Font beholden = G.getFont("Beholden");
+
+  int fps = GetFPS();
+  std::string info = "FPS " + std::to_string(fps);
+
+  Vector2 infoPos {};
+  infoPos.x = 6;
+  infoPos.y = 6;
+
+  DrawTextEx(beholden, info.c_str(), infoPos, 18.f, 1.f, BLACK);   
+
+  infoPos.x -= 1;
+  infoPos.y -= 1;
+
+  DrawTextEx(beholden, info.c_str(), infoPos, 18.f, 1.f, GREEN);   
 }
 
 void SceneLevel::systemAnimation()
@@ -244,6 +274,78 @@ void SceneLevel::systemAnimation()
         = (e->animation->currentFrame + 1) % e->animation->numberFrames;
     }
 
+  }
+}
+
+Vector2 SceneLevel::getOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2)
+{
+  Vector2 result {};
+
+  if ((!e1->transform) || (!e1->aabb) ||
+      (!e2->transform) || (!e1->aabb))
+  {
+    return result;
+  }
+
+  float dx = fabs((e2->transform->position.x + e2->aabb->size.x / 2) -
+                  (e1->transform->position.x + e1->aabb->size.x / 2));
+  float dy = fabs((e2->transform->position.y + e2->aabb->size.y / 2) -
+                  (e1->transform->position.y + e1->aabb->size.y / 2));
+
+  result.x = (e2->aabb->size.x + e1->aabb->size.x) / 2 - dx;
+  result.y = (e2->aabb->size.y + e1->aabb->size.y) / 2 - dy;
+  
+  return result;
+}
+
+void SceneLevel::systemPhysics()
+{
+  auto entities = m_entities.getEntities("Tile");
+
+  for ( const auto &e: entities)
+  {
+    if (!e->aabb || !e->transform)
+      continue;
+    
+    Vector2 overlap = getOverlap(m_player, e);
+    
+    if (overlap.x > 0.f && overlap.y > 0.f)
+    {
+      // TODO: Надо каким-то образом определить положение игрока, если игрок
+      // находиться над тайлом и произошла коллизия, значит он стоит.
+      //
+      // TODO: Определение разрешения коллизии проиходит на основании предыду-
+      //       щего пололжения. При возникновении коллизии надо проверить
+      //       какое было перекрытие на прошлом кадре и разрешить коллизию
+      //       основываясь на этом. Если было горизонтальное перекрытие, то
+      //       движение было вертикальным.
+      
+      TODO("Collision");
+      
+    }
+  }
+}
+
+void SceneLevel::systemMovement()
+{
+  m_player->transform->velocity.y = 0;
+  m_player->transform->velocity.x = 0;
+
+  if (m_player->input->up)
+    m_player->transform->velocity.y = -1;
+  if (m_player->input->down)
+    m_player->transform->velocity.y = +1;
+  if (m_player->input->left)
+    m_player->transform->velocity.x = -1;
+  if (m_player->input->right)
+    m_player->transform->velocity.x = +1;
+
+  auto entities = m_entities.getEntities(); 
+
+  for (const auto &e: entities)
+  {
+    e->transform->position = Vector2Add(e->transform->position, 
+        Vector2Normalize(e->transform->velocity));
   }
 }
 
@@ -287,6 +389,21 @@ void SceneLevel::systemInput()
   if (IsKeyPressed(KEY_ESCAPE))
     G.setCurrentScene("Menu");
 
+
+  m_player->input->up = false;
+  m_player->input->down = false;
+  m_player->input->left = false;
+  m_player->input->right = false;
+
+  if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+    m_player->input->up = true;
+  if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
+    m_player->input->down = true;
+  if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+    m_player->input->right = true;
+  if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))
+    m_player->input->left = true;
+
   // if (IsKeyPressed(KEY_P))
   // {
   //   auto entities = m_entities.getEntities();
@@ -301,7 +418,10 @@ void SceneLevel::systemInput()
 
 void SceneLevel::systemUpdate()
 {
+  systemMovement();
+  systemPhysics();
   systemAnimation();
+
 
   m_entities.update();
 }
@@ -327,6 +447,10 @@ void SceneLevel::systemRender()
     DEBUG_drawGrid();
   if (m_displayAABB)
     DEBUG_drawAABB();
+#ifndef NDEBUG
+  DEBUG_drawInfo(); 
+#endif
+
 
   EndDrawing();
 }

@@ -1,3 +1,4 @@
 Window 800 600 60
 Assets res/assets.txt
 Level Level1 res/level1.txt
+Level Level2 res/level1.txt
