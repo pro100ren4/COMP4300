@@ -10,4 +10,4 @@ Tile Question 5 30
 Tile Question 4 30
 Tile Question 3 30
 Dec BushBig 2 31
-Player 0 10 24 24 5 -20 20 Buster
+Player 0 10 24 24 5 -20 5 Buster

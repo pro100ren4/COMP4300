@@ -355,17 +355,16 @@ void SceneLevel::systemPhysics()
 
 void SceneLevel::systemMovement()
 {
-  m_player->transform->velocity.y = 0;
-  m_player->transform->velocity.x = 0;
+  m_player->transform->velocity.y = m_levelConfig->player.gravity;
+  m_player->transform->velocity.x = 0.f;
 
+  // FIXME: Сделать нормальный прижок.
   if (m_player->input->up)
-    m_player->transform->velocity.y = -1;
-  if (m_player->input->down)
-    m_player->transform->velocity.y = +1;
+    m_player->transform->velocity.y += m_levelConfig->player.jumpSpeed;
   if (m_player->input->left)
-    m_player->transform->velocity.x = -1;
+    m_player->transform->velocity.x = -m_levelConfig->player.moveSpeed;
   if (m_player->input->right)
-    m_player->transform->velocity.x = +1;
+    m_player->transform->velocity.x = +m_levelConfig->player.moveSpeed;
 
   auto entities = m_entities.getEntities(); 
 
@@ -373,7 +372,7 @@ void SceneLevel::systemMovement()
   {
     e->transform->prevPosition = e->transform->position;
     e->transform->position = Vector2Add(e->transform->position, 
-        Vector2Normalize(e->transform->velocity));
+        e->transform->velocity);
   }
 }
 
@@ -423,7 +422,7 @@ void SceneLevel::systemInput()
   m_player->input->left = false;
   m_player->input->right = false;
 
-  if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
+  if (IsKeyPressed(KEY_W) || IsKeyDown(KEY_UP))
     m_player->input->up = true;
   if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))
     m_player->input->down = true;
